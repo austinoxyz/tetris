@@ -6,8 +6,8 @@
 3. https://tetris.wiki/Combo
 
 ## Things to implement
-1. Scoring system
-2. Better piece layout and rotation (see diagrams in [link 3])
+1. Difficult move identification and scoring
+2. Perfect clear checking and scoring
 3. Better input feel
     - ability to hold down movement/rotate keys
 4. Pause and game over state screens
@@ -16,4 +16,4 @@
     - hold slot
     - upcoming tetriminoes
     - score
-7. Perfect clear checking and scoring
+7. Better piece layout and rotation (see diagrams in [link 3])
