@@ -3,9 +3,9 @@
 
 #include "tetrimino.h"
 
-#define NPL_BAGSIZE (2*(TT_COUNT - 1))
-#define NPL_INC_BAGPOS(npl) {(npl->bagpos)=((npl->bagpos+1)%NPL_BAGSIZE);}
-#define NPL_CURR_BAG_NO(npl) ((npl->bagpos)%NPL_BAGSIZE)
+#define NPL_BAGSIZE (2*(TT_COUNT-1))
+#define NPL_INC_BAGPOS(npl) ((npl->bagpos)=((npl->bagpos+1)%NPL_BAGSIZE))
+#define NPL_CURR_BAG_NO(npl) ((npl->bagpos)/(TT_COUNT-1))
 typedef struct NextPieceList {
     int bagpos;
     TetriminoType bag[NPL_BAGSIZE];
