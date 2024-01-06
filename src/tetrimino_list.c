@@ -3,11 +3,11 @@
 void nextpiecelist_new(NextPieceList *npl) {
     npl->bagpos = 0;
     memset(npl->bag, TT_EMPTY, NPL_BAGSIZE * sizeof(TetriminoType));
-//    nextpiecelist_generate_bag(npl, 0);
+    nextpiecelist_generate_bag(npl, 0);
 }
 
 void nextpiecelist_generate_bag(NextPieceList *npl, int bagn) {
-    memset(&npl->bag[NPL_CURR_BAG_NO(npl)*(TT_COUNT-1)], TT_EMPTY, (TT_COUNT-1)*sizeof(TetriminoType));
+    memset(&npl->bag[bagn*(TT_COUNT-1)], TT_EMPTY, (TT_COUNT-1)*sizeof(TetriminoType));
     for (int i = 0; i < (TT_COUNT-1); /**/) {
         TetriminoType type = (TetriminoType) ((rand() % (TT_COUNT-1)) + 1);
         bool already_in = false;
@@ -20,15 +20,18 @@ void nextpiecelist_generate_bag(NextPieceList *npl, int bagn) {
         if (already_in) {
             continue;
         } else {
-            npl->bag[bagn*(TT_COUNT-1)+i] = type;
-            ++i;
+            npl->bag[bagn*(TT_COUNT-1)+i++] = type;
         }
     }
 }
 
-Tetrimino nextpiecelist_get_next_piece(NextPieceList *npl) {
+Tetrimino nextpiecelist_peek_next_piece(NextPieceList* npl) {
+    return tetrimino_new(npl->bag[npl->bagpos]);
+}
+
+Tetrimino nextpiecelist_pop_next_piece(NextPieceList *npl) {
     if (npl->bagpos%(TT_COUNT-1) == 0)
-        nextpiecelist_generate_bag(npl, NPL_CURR_BAG_NO(npl));
+        nextpiecelist_generate_bag(npl, NPL_OTHER_BAG(npl));
     Tetrimino result = tetrimino_new(npl->bag[npl->bagpos]);
     NPL_INC_BAGPOS(npl);
     return result;

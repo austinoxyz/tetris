@@ -16,8 +16,9 @@ void tetris_game_new(TetrisGame *game, int winwidth, int winheight, int rows, in
         game->board[i] = (TetriminoType*)calloc(cols, sizeof(TetriminoType));
 
     nextpiecelist_new(&game->nextpiece_list);
-    game->activepiece = nextpiecelist_get_next_piece(&game->nextpiece_list);
+    game->activepiece = nextpiecelist_pop_next_piece(&game->nextpiece_list);
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
+    game->holdpiece = tetrimino_new(TT_EMPTY);
 
     game->canvas = LoadRenderTexture(winwidth, winheight);
 
@@ -49,6 +50,27 @@ bool tetris_game_try_fit_piece(TetrisGame *game, Tetrimino *tetrimino, Position 
     return true;
 }
 
+void tetris_game_hold_piece(TetrisGame *game) {
+    Tetrimino piece_to_swap_in = tetrimino_new(TT_EMPTY);
+    bool holdempty = false;
+    if (game->holdpiece.type != TT_EMPTY) {
+        piece_to_swap_in = game->holdpiece;
+    } else {
+        holdempty = true;
+        piece_to_swap_in = nextpiecelist_peek_next_piece(&game->nextpiece_list);
+    }
+
+    if (!tetris_game_try_fit_piece(game, &piece_to_swap_in, game->activepiece_pos))
+        return;
+
+    game->holdpiece = game->activepiece;
+    if (holdempty) {
+        game->activepiece = nextpiecelist_pop_next_piece(&game->nextpiece_list);
+    } else {
+        game->activepiece = piece_to_swap_in;
+    }
+}
+
 void tetris_game_emplace_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
     for (int r = 0; r < 4; ++r) {
         for (int c = 0; c < 4; ++c) {
@@ -62,7 +84,7 @@ void tetris_game_emplace_piece(TetrisGame *game, Tetrimino *tetrimino, Position 
 }
 
 void tetris_game_cycle_next_piece(TetrisGame *game) {
-    game->activepiece = nextpiecelist_get_next_piece(&game->nextpiece_list);
+    game->activepiece = nextpiecelist_pop_next_piece(&game->nextpiece_list);
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
 }
 
@@ -105,8 +127,21 @@ void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position
 
 void tetris_game_try_rotate_piece(TetrisGame *game, TetriminoRotationDirection const dir) {
     tetrimino_layout_rotate(&game->activepiece.layout, dir);
-    if (!tetris_game_try_fit_piece(game, &game->activepiece, game->activepiece_pos))
+    if (!tetris_game_try_fit_piece(game, &game->activepiece, game->activepiece_pos)) {
+        KickOffset kickoffsets[5];
+        get_kick_offsets(kickoffsets, &game->activepiece, dir);
+        for (int i = 0; i < 5; ++i) {
+            Position const _pos = CLITERAL(Position) {
+                .row=(game->activepiece_pos.row + kickoffsets[i].row),
+                .col=(game->activepiece_pos.col + kickoffsets[i].col),
+            };
+            if (tetris_game_try_fit_piece(game, &game->activepiece, _pos)) {
+                game->activepiece_pos = _pos;
+                return;
+            }
+        }
         tetrimino_layout_rotate(&game->activepiece.layout, opposite_rotation_direction(dir));
+    }
 }
 
 bool tetris_game_try_move_piece(TetrisGame *game, TetriminoMoveDirection const dir) {
@@ -198,6 +233,8 @@ void tetris_game_handle_user_input(TetrisGame *game) {
             tetris_game_try_move_piece(game, TMD_EAST);
         } else if (IsKeyPressed(KEY_SPACE)) {
             tetris_game_hard_drop(game);
+        } else if (IsKeyPressed(KEY_C)) {
+            tetris_game_hold_piece(game);
         }
 
         if (IsKeyPressed(KEY_LEFT_SHIFT)) {

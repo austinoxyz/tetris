@@ -31,6 +31,7 @@ typedef struct TetrisGame {
     NextPieceList   nextpiece_list;
     Tetrimino       activepiece;
     Position        activepiece_pos;
+    Tetrimino       holdpiece;
 
     RenderTexture2D canvas;
 
