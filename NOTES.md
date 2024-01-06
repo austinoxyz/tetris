@@ -9,7 +9,11 @@
 1. Kicks
 2. Scoring system
 3. Better piece layout and rotation (see diagrams in [link 3])
-4. Draw score and hold box
-5. Soft dropping
-6. Pause and game over state screens
+4. Hold slot
+5. Pause and game over state screens
+6. Ghost piece silhouette
+7. Draw Rest of the scene 
+    - hold slot
+    - upcoming tetriminoes
+    - score
 
