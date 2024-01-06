@@ -54,9 +54,11 @@ void tetrimino_list_free(TetriminoList *list) {
 
 void tetris_game_new(TetrisGame *game, int winwidth, int winheight, int rows, int cols) {
     game->level = 1;
+    game->score = 0;
     game->rowscompleted = 0;
     game->combo = -1;
-    game->score = 0;
+    game->difficult_combo = -1;
+    game->softdropping = false;
 
     game->rows = rows;
     game->cols = cols;

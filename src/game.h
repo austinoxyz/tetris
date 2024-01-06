@@ -37,11 +37,12 @@ typedef enum TetrisGameState {
 #define PIECE_START_POS(rows,cols) CLITERAL(Position) { 0, ((cols)/2)-2 }
 typedef struct TetrisGame {
     int             level;
+    int             score;
     int             rowscompleted;
     int             combo;
-    int             score;
+    int             difficult_combo;
+    bool            softdropping;
 
-    int             softdropping;
     int             rows;
     int             cols;
     TetriminoType **board;
