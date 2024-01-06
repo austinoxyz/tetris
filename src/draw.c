@@ -28,7 +28,7 @@ void draw_block(Position const pos, int const sidelen, Color const color) {
         .height=sidelen
     };
     DrawRectangleRec(block, color);
-    DrawRectangleLinesEx(block, 1, BLACK);
+    DrawRectangleLinesEx(block, 1.2, BLACK);
 }
 
 void draw_tetrimino(Tetrimino *tetrimino, Position const pos, int const sidelen) {
