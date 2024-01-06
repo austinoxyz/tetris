@@ -254,10 +254,10 @@ void tetris_game_handle_user_input(TetrisGame *game) {
         }
 
         if (IsKeyPressed(KEY_LEFT_SHIFT)) {
-            // game->softdropping = true;
+            game->softdropping = true;
             game->ticks_per_sec *= 3;
         } else if (IsKeyReleased(KEY_LEFT_SHIFT)) {
-            // game->softdropping = false;
+            game->softdropping = false;
             game->ticks_per_sec /= 3;
         }
     }
@@ -288,6 +288,6 @@ void tetris_game_update(TetrisGame *game) {
     }
 
     ++game->activepiece_pos.row;
-//    if (game->softdropping) ++game->score;
+    if (game->softdropping) ++game->score;
 }
 

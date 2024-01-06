@@ -41,7 +41,7 @@ typedef struct TetrisGame {
     int             combo;
     int             score;
 
-
+    int             softdropping;
     int             rows;
     int             cols;
     TetriminoType **board;
@@ -49,7 +49,6 @@ typedef struct TetrisGame {
     TetriminoList   nextpiece_list;
     Tetrimino       activepiece;
     Position        activepiece_pos;
-//    bool            softdropping;
 
     RenderTexture2D canvas;
 
