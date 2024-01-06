@@ -84,7 +84,12 @@ main: $(OBJECTS)
 # -----------------------------------
 .PHONY: debug
 debug: main
+	gdb $(BIN_NAME)
+
+.PHONY: debug-go
+debug-go: main
 	gdb -ex run $(BIN_NAME)
+
 
 .PHONY: cppcheck
 cppcheck: debug-dir
