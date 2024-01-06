@@ -16,4 +16,4 @@
     - hold slot
     - upcoming tetriminoes
     - score
-
+7. Perfect clear checking and scoring
