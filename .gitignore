@@ -1,0 +1,9 @@
+build/
+debug/
+
+.ccls-cache/
+.ccls
+
+.vimspector.json
+
+src/*.o
