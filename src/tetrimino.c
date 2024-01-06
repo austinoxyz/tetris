@@ -72,7 +72,6 @@ TetriminoRotationDirection opposite_rotation_direction(TetriminoRotationDirectio
 }
 
 void tetrimino_layout_rotate(TetriminoLayout *layout, TetriminoRotationDirection const dir) {
-    printf("Called tetrimino_layout_rotate()!\n");
     if (dir == TRD_COUNT) {
         fprintf(stderr, "tetrimino_layout_rotate(): invalid direction passed as argument.\n");
         exit(1);

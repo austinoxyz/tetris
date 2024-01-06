@@ -111,8 +111,6 @@ void tetris_game_emplace_piece(TetrisGame *game, Tetrimino *tetrimino, Position 
             }
         }
     }
-    printf("Placed piece of type '%d' at location (%d, %d)\n", 
-            tetrimino->type, pos.row, pos.col);
 }
 
 void tetris_game_cycle_next_piece(TetrisGame *game) {
