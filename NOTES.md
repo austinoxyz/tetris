@@ -6,13 +6,13 @@
 3. https://tetris.wiki/Combo
 
 ## Things to implement
-1. Kicks
-2. Scoring system
-3. Better piece layout and rotation (see diagrams in [link 3])
-4. Hold slot
-5. Pause and game over state screens
-6. Ghost piece silhouette
-7. Draw Rest of the scene 
+1. Scoring system
+2. Better piece layout and rotation (see diagrams in [link 3])
+3. Better input feel
+    - ability to hold down movement/rotate keys
+4. Pause and game over state screens
+5. Ghost piece silhouette
+6. Draw Rest of the scene 
     - hold slot
     - upcoming tetriminoes
     - score
