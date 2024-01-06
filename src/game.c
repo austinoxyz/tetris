@@ -1,56 +1,5 @@
-#include "game.h"
 #include "common.h"
-
-TetriminoListNode *tetrimino_list_node_new(void) {
-    TetriminoListNode *result = (TetriminoListNode*)malloc(sizeof(TetriminoListNode));
-    tetrimino_random_new(&result->item);
-    result->next = NULL;
-    return result;
-}
-
-void tetrimino_list_node_free(TetriminoListNode *node) {
-    if (node->next) {
-        tetrimino_list_node_free(node->next);
-        free(node->next);
-    }
-}
-
-void tetrimino_list_new(TetriminoList *list, int startsize) {
-    list->head = list->tail = NULL;
-    list->size = 0;
-    for (int i = 0; i < startsize; ++i)
-        tetrimino_list_append_random(list);
-}
-
-void tetrimino_list_append_random(TetriminoList *list) {
-    if (!list->head) {
-        list->head = tetrimino_list_node_new();
-        list->tail = list->head;
-        return;
-    }
-    TetriminoListNode *node = list->head;
-    while (node->next) 
-        node = node->next;
-    node->next = tetrimino_list_node_new();
-    list->tail = node->next;
-    ++list->size;
-}
-
-Tetrimino tetrimino_list_pop_head(TetriminoList *list) {
-    if (!list->head) {
-        fprintf(stderr, "Cannot pop tetrimino from empty list.");
-        exit(1);
-    }
-    Tetrimino result = list->head->item;
-    list->head = list->head->next;
-    --list->size;
-    return result;
-}
-
-void tetrimino_list_free(TetriminoList *list) {
-    if (list->head)
-        tetrimino_list_node_free(list->head);
-}
+#include "game.h"
 
 void tetris_game_new(TetrisGame *game, int winwidth, int winheight, int rows, int cols) {
     game->level = 1;
@@ -66,8 +15,8 @@ void tetris_game_new(TetrisGame *game, int winwidth, int winheight, int rows, in
     for (int i = 0; i < rows; ++i)
         game->board[i] = (TetriminoType*)calloc(cols, sizeof(TetriminoType));
 
-    tetrimino_list_new(&game->nextpiece_list, PIECE_LOOKAHEAD_COUNT);
-    tetrimino_random_new(&game->activepiece);
+    nextpiecelist_new(&game->nextpiece_list);
+    game->activepiece = nextpiecelist_get_next_piece(&game->nextpiece_list);
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
 
     game->canvas = LoadRenderTexture(winwidth, winheight);
@@ -82,16 +31,13 @@ void tetris_game_free(TetrisGame *game) {
                 free(game->board[i]);
         free(game->board);
     }
-    tetrimino_list_free(&game->nextpiece_list);
 }
 
 bool tetris_game_try_fit_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
     for (int r = 0; r < 4; ++r) {
         for (int c = 0; c < 4; ++c) {
             if (tetrimino->layout[r][c]) {
-                Position const _pos = CLITERAL(Position) {
-                    pos.row + r, pos.col + c
-                };
+                Position const _pos = CLITERAL(Position) { pos.row + r, pos.col + c };
                 if ((_pos.row < 0 || _pos.row >= game->rows)
                         || (_pos.col < 0 || _pos.col >= game->cols)
                         || game->board[_pos.row][_pos.col]) {
@@ -116,8 +62,7 @@ void tetris_game_emplace_piece(TetrisGame *game, Tetrimino *tetrimino, Position 
 }
 
 void tetris_game_cycle_next_piece(TetrisGame *game) {
-    game->activepiece = tetrimino_list_pop_head(&game->nextpiece_list);
-    tetrimino_list_append_random(&game->nextpiece_list);
+    game->activepiece = nextpiecelist_get_next_piece(&game->nextpiece_list);
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
 }
 

@@ -50,7 +50,6 @@ typedef struct Tetrimino {
     TetriminoLayout      layout;
 } Tetrimino;
 
-void tetrimino_new(Tetrimino*, int);
-void tetrimino_random_new(Tetrimino*);
+Tetrimino tetrimino_new(TetriminoType type);
 
 #endif

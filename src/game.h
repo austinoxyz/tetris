@@ -3,26 +3,7 @@
 
 #include <raylib.h>
 
-#include "tetrimino.h"
-
-typedef struct TetriminoListNode {
-    Tetrimino item;
-    struct TetriminoListNode *next;
-} TetriminoListNode;
-
-TetriminoListNode *tetrimino_list_node_new(void);
-void               tetrimino_list_node_free(TetriminoListNode *node);
-
-typedef struct TetriminoList {
-    TetriminoListNode *head;
-    TetriminoListNode *tail;
-    int size;
-} TetriminoList;
-
-void      tetrimino_list_new(TetriminoList *list, int len);
-void      tetrimino_list_free(TetriminoList *list);
-void      tetrimino_list_append_random(TetriminoList *list);
-Tetrimino tetrimino_list_pop_head(TetriminoList *list);
+#include "tetrimino_list.h"
 
 typedef enum TetrisGameState {
     TGS_IN_PLAY = 0,
@@ -47,7 +28,7 @@ typedef struct TetrisGame {
     int             cols;
     TetriminoType **board;
 
-    TetriminoList   nextpiece_list;
+    NextPieceList   nextpiece_list;
     Tetrimino       activepiece;
     Position        activepiece_pos;
 

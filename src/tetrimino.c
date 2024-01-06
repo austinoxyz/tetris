@@ -105,13 +105,11 @@ void tetrimino_layout_rotate(TetriminoLayout *layout, TetriminoRotationDirection
     }
 }
 
-void tetrimino_new(Tetrimino *tetrimino, int type) {
-    tetrimino->type = (TetriminoType)type;
-    tetrimino->orientation = TO_ZERO;
-    memcpy(tetrimino->layout, tetrimino_layout[type], sizeof(TetriminoLayout));
-}
-
-void tetrimino_random_new(Tetrimino *tetrimino) {
-    tetrimino_new(tetrimino, (rand() % (TT_COUNT - 1) + 1));
+Tetrimino tetrimino_new(TetriminoType type) {
+    Tetrimino result;
+    result.type = (TetriminoType)type;
+    result.orientation = TO_ZERO;
+    memcpy(result.layout, tetrimino_layout[type], sizeof(TetriminoLayout));
+    return result;
 }
 
