@@ -6,10 +6,9 @@ CC_VERSION := 17
 THIRDPARTY_LIBS := raylib
 
 WARNING_FLAGS := -Wall -Wextra -Werror
-WARNING_FLAGS += -Wshadow
+WARNING_FLAGS += -Wshadow -Wuninitialized -Wformat
 
 CFLAGS := -std=c$(CC_VERSION) -ggdb $(WARNING_FLAGS)
-CFLAGS += -Wuninitialized -Wformat
 
 INCLUDES := -I./src/ `pkg-config --cflags $(THIRDPARTY_LIBS)`
 SOURCES  := $(wildcard src/*.c) $(wildcard src/**/*.c)
