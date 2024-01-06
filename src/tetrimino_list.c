@@ -8,7 +8,7 @@ void nextpiecelist_new(NextPieceList *npl) {
 
 void nextpiecelist_generate_bag(NextPieceList *npl, int bagn) {
     for (int i = 0; i < (TT_COUNT-1); /**/) {
-        TetriminoType type = (TetriminoType) ((rand() % NPL_BAGSIZE) + 1);
+        TetriminoType type = (TetriminoType) ((rand() % (TT_COUNT-1)) + 1);
         bool already_in = false;
         for (int i = 0; i < 7; ++i) {
             if (npl->bag[bagn*(TT_COUNT-1)+i] == type) {
