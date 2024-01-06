@@ -6,6 +6,7 @@ CC_VERSION := 17
 THIRDPARTY_LIBS := raylib
 
 WARNING_FLAGS := -Wall -Wextra -Werror
+WARNING_FLAGS += -Wshadow
 
 CFLAGS := -std=c$(CC_VERSION) -ggdb $(WARNING_FLAGS)
 CFLAGS += -Wuninitialized -Wformat
