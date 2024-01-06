@@ -88,9 +88,9 @@ void tetris_game_cycle_next_piece(TetrisGame *game) {
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
 }
 
-int tetris_game_clear_completed_rows(TetrisGame *game) {
+void tetris_game_clear_completed_rows(TetrisGame *game) {
     bool rowcomplete;
-    int nrows = 0;
+    int nrows_complete = 0;
     for (int r = game->rows - 1; r >= 0; /**/) {
         rowcomplete = true;
         for (int c = 0; c < game->cols; ++c) {
@@ -100,7 +100,7 @@ int tetris_game_clear_completed_rows(TetrisGame *game) {
             }
         }
         if (rowcomplete) {
-            ++nrows;
+            ++nrows_complete;
             for (int r2 = r - 1; r2 >= 0; --r2)
                 memmove(game->board[r2+1], game->board[r2], game->cols * sizeof(TetriminoType));
             memset(game->board[0], TT_EMPTY, sizeof(TetriminoType) * game->cols);
@@ -108,15 +108,51 @@ int tetris_game_clear_completed_rows(TetrisGame *game) {
             --r;
         }
     }
-    return nrows;
+
+    // no score to add here in this case
+    if (!nrows_complete) return;
+
+    game->rowscompleted += nrows_complete;
+    if (game->rowscompleted % 10 == 0)
+        ++game->level;
+
+    int scoregained = 0;
+    bool difficult = false;
+    switch (nrows_complete) {
+    case 1: 
+        scoregained = 100 * game->level;
+        break;
+    case 2:
+        scoregained = 300 * game->level;
+        break;
+    case 3:
+        scoregained = 500 * game->level;
+        break;
+    case 4:
+        scoregained = 800 * game->level;
+        ++game->difficult_combo;
+        break;
+    }
+
+    if (game->combo) {
+        scoregained += 50 * game->combo * game->level;
+    } else {
+        game->combo = -1;
+    }
+
+    if (game->difficult_combo > 0)
+        scoregained *= 1.5;
+
+    game->score += scoregained;
+
+    ++game->combo;
+    if (!difficult) 
+        game->difficult_combo = -1;
 }
 
 void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
     tetris_game_emplace_piece(game, tetrimino, pos);
-    int ncompleted = tetris_game_clear_completed_rows(game);
-    if (ncompleted > 0) {
-        // TODO scoring
-    }
+    tetris_game_clear_completed_rows(game);
     tetris_game_cycle_next_piece(game);
     if (!tetris_game_try_fit_piece(game, &game->activepiece, game->activepiece_pos)) {
         printf("Game over!\n");
@@ -150,11 +186,10 @@ bool tetris_game_try_move_piece(TetrisGame *game, TetriminoMoveDirection const d
         exit(1);
     }
 
-    int col_extant;
     int offset;
     for (int r = 0; r < 4; ++r) {
         int c;
-        col_extant = -1;
+        int col_extant = -1;
         if (dir == TMD_EAST) {
             for (c = 3; c >= 0; --c) {
                 if (game->activepiece.layout[r][c]) {
