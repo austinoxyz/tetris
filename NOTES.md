@@ -4,16 +4,15 @@
 1. https://tetris.wiki/Super_Rotation_System
 2. https://tetris.wiki/Scoring#Recent_guideline_compatible_games
 3. https://tetris.wiki/Combo
+4. https://tetris.wiki/T-Spin
 
 ## Things to implement
 1. Difficult move identification and scoring
-2. Perfect clear checking and scoring
-3. Better input feel
+2. Better input feel
     - ability to hold down movement/rotate keys
-4. Pause and game over state screens
-5. Ghost piece silhouette
-6. Draw Rest of the scene 
+3. Pause and game over state screens
+4. Ghost piece silhouette
+5. Draw Rest of the scene 
     - hold slot
     - upcoming tetriminoes
-    - score
-7. Better piece layout and rotation (see diagrams in [link 3])
+6. T-spin identification and scoring
