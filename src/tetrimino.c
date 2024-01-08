@@ -2,9 +2,9 @@
 
 static const TetriminoLayout tetrimino_layout[TT_COUNT] = {
     {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}}, // TT_EMPTY
-    {{1,1,1,1},{0,0,0,0},{0,0,0,0},{0,0,0,0}}, // TT_STRAIGHT
+    {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}}, // TT_STRAIGHT
     {{1,1,0,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_SQUARE
-    {{1,1,1,0},{0,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_T
+    {{0,1,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // TT_T
     {{1,0,0,0},{1,0,0,0},{1,1,0,0},{0,0,0,0}}, // TT_L1
     {{0,1,0,0},{0,1,0,0},{1,1,0,0},{0,0,0,0}}, // TT_L2
     {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_SKEW1
@@ -77,35 +77,40 @@ TetriminoRotationDirection opposite_rotation_direction(TetriminoRotationDirectio
 #endif
 }
 
-void tetrimino_layout_rotate(TetriminoLayout *layout, TetriminoRotationDirection const dir) {
+void tetrimino_rotate(Tetrimino *tetrimino, TetriminoRotationDirection const dir) {
     if (dir == TRD_COUNT) {
         fprintf(stderr, "tetrimino_layout_rotate(): invalid direction passed as argument.\n");
         exit(1);
     }
 
+    // O-tetrimino can't rotate
+    if (tetrimino->type == TT_SQUARE) return;
+
+    int bb_width = (tetrimino->type == TT_STRAIGHT) ? 4 : 3;
+
     // transpose
-    for (int r = 0; r < 4; ++r)
-        for (int c = r; c < 4; ++c) {
-            TetriminoType tmp = (*layout)[r][c];
-            (*layout)[r][c] = (*layout)[c][r];
-            (*layout)[c][r] = tmp;
+    for (int r = 0; r < bb_width; ++r)
+        for (int c = r; c < bb_width; ++c) {
+            TetriminoType tmp = tetrimino->layout[r][c];
+            tetrimino->layout[r][c] = tetrimino->layout[c][r];
+            tetrimino->layout[c][r] = tmp;
         }
 
     // reverse rows for CW, cols for CCW
     if (dir == TRD_CW) {
-        for (int r = 0; r < 4; ++r) {
-            for (int c = 0; c < 2; ++c) {
-                TetriminoType tmp = (*layout)[r][c];
-                (*layout)[r][c] = (*layout)[r][3-c];
-                (*layout)[r][3-c] = tmp;
+        for (int r = 0; r < bb_width; ++r) {
+            for (int c = 0; c < bb_width/2; ++c) {
+                TetriminoType tmp = tetrimino->layout[r][c];
+                tetrimino->layout[r][c] = tetrimino->layout[r][bb_width-1-c];
+                tetrimino->layout[r][bb_width-1-c] = tmp;
             }
         }
     } else {
-        for (int c = 0; c < 4; ++c) {
-            for (int r = 0; r < 2; ++r) {
-                TetriminoType tmp = (*layout)[r][c];
-                (*layout)[r][c] = (*layout)[3-r][c];
-                (*layout)[3-r][c] = tmp;
+        for (int c = 0; c < bb_width; ++c) {
+            for (int r = 0; r < bb_width/2; ++r) {
+                TetriminoType tmp = tetrimino->layout[r][c];
+                tetrimino->layout[r][c] = tetrimino->layout[bb_width-1-r][c];
+                tetrimino->layout[bb_width-1-r][c] = tmp;
             }
         }
     }

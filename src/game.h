@@ -16,13 +16,17 @@ typedef enum TetrisGameState {
 #define BOARD_DEFAULT_COLS 10
 #define PIECE_LOOKAHEAD_COUNT 5
 #define PIECE_START_POS(rows,cols) CLITERAL(Position) { 0, ((cols)/2)-2 }
+#define TETRIS_GAME_MAX_SCORE_TEXT_LEN 127
 typedef struct TetrisGame {
     int             level;
     int             score;
     int             rowscompleted;
     int             combo;
     int             difficult_combo;
+    int             tetris;
     bool            softdropping;
+    bool            justtouchedpiece;
+    int             nblocks_filled;
 
     int             rows;
     int             cols;

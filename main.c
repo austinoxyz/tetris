@@ -5,18 +5,7 @@
 #include "log.h"
 #include "draw.h"
 
-#define WIN_WIDTH 400
-#define WIN_HEIGHT 800
-
-#define BOARD_CANVAS_SCALE_FACTOR 1
-//#define BOARD_CANVAS_WIDTH  (BOARD_CANVAS_SCALE_FACTOR*(WIN_WIDTH/2))
-#define BOARD_CANVAS_WIDTH (BOARD_CANVAS_SCALE_FACTOR*WIN_WIDTH)
-#define BOARD_CANVAS_HEIGHT (BOARD_CANVAS_SCALE_FACTOR*WIN_HEIGHT)
-#define BOARD_CANVAS_PADDING ((WIN_HEIGHT-BOARD_CANVAS_HEIGHT)/2)
-
-#define SRC_DRAW_REC  CLITERAL(Rectangle){0,0,BOARD_CANVAS_WIDTH,-BOARD_CANVAS_HEIGHT}
-#define DEST_DRAW_REC CLITERAL(Rectangle){BOARD_CANVAS_PADDING,BOARD_CANVAS_PADDING,BOARD_CANVAS_WIDTH,BOARD_CANVAS_HEIGHT-BOARD_CANVAS_PADDING}
-#define ORIGIN CLITERAL(Vector2){0,0}
+//static Font font_iosevka;
 
 static TetrisGame game;
 
@@ -28,11 +17,14 @@ void init(void) {
     InitWindow(WIN_WIDTH, WIN_HEIGHT, "tetris");
     SetTargetFPS(60);
     tetris_game_new(&game, BOARD_CANVAS_WIDTH, BOARD_CANVAS_HEIGHT, BOARD_DEFAULT_ROWS, BOARD_DEFAULT_COLS);
+
+    tetris_load_fonts();
 }
 
 void cleanup(void) {
     tetris_close_logfile();
     tetris_game_free(&game);
+    tetris_unload_fonts();
     CloseWindow();
 }
 

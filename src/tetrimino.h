@@ -36,13 +36,12 @@ typedef enum TetriminoRotationDirection {
     TRD_COUNT
 } TetriminoRotationDirection;
 
-#define ROTATE_ORIENTATION(dir, ori) ((TetriminoOrientation)(((dir)+((ori)==TRD_CW?-1:1))%TO_COUNT))
+#define ROTATE_ORIENTATION(dir, ori) \
+    ((TetriminoOrientation)(((dir)+((ori)==TRD_CW?-1:1))%TO_COUNT))
 
 TetriminoRotationDirection opposite_rotation_direction(TetriminoRotationDirection const);
 
 typedef bool TetriminoLayout[4][4];
-
-void tetrimino_layout_rotate(TetriminoLayout *layout, TetriminoRotationDirection const dir);
 
 typedef struct Tetrimino {
     TetriminoType        type;
@@ -51,6 +50,7 @@ typedef struct Tetrimino {
 } Tetrimino;
 
 Tetrimino tetrimino_new(TetriminoType type);
+void      tetrimino_rotate(Tetrimino *tetrimino, TetriminoRotationDirection const dir);
 
 typedef Position KickOffset;
 
