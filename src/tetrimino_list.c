@@ -37,3 +37,13 @@ Tetrimino nextpiecelist_pop_next_piece(NextPieceList *npl) {
     return result;
 }
 
+TetriminoType nextpiecelist_piecetype_n_ahead(NextPieceList* npl, int n) {
+    if (n < 0 || n >= NPL_BAGSIZE) {
+        fprintf(stderr, "nextpiecelist_piece_n_ahead(): Argument n too large.\n");
+        assert(false);
+        exit(1);
+    }
+
+    return npl->bag[(n+npl->bagpos)%NPL_BAGSIZE];
+}
+

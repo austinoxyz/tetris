@@ -1,8 +1,15 @@
 #ifndef TETRIS_UTIL_H
 #define TETRIS_UTIL_H
 
-#include "common.h"
+#include <stdint.h>
+#include <raylib.h>
 
-uint64_t current_time_us(void);
+// unix time in us
+typedef uint64_t timestamp_t;
+#define US_IN_A_SECOND 1000000
+
+timestamp_t current_time_us(void);
+
+Color hex_to_color(uint32_t);
 
 #endif

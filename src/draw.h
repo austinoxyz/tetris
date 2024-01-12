@@ -2,23 +2,25 @@
 #define TETRIS_DRAW_H
 
 #include "game.h"
+#include "window.h"
 
-#define WIN_WIDTH 800
-#define WIN_HEIGHT 800
+struct DrawInfo {
+    int canvaswidth, canvasheight;
 
-#define BOARD_CANVAS_SCALE_FACTOR 0.95
-#define BOARD_CANVAS_WIDTH  (BOARD_CANVAS_SCALE_FACTOR*(WIN_WIDTH))
-#define BOARD_CANVAS_HEIGHT (BOARD_CANVAS_SCALE_FACTOR*WIN_HEIGHT)
-#define BOARD_CANVAS_PADDING ((WIN_HEIGHT-BOARD_CANVAS_HEIGHT)/2)
+    float boardaspect;
+    int boardwidth, boardheight;
+    int blocksidelen;
+    int displayblocksidelen;
 
-#define SRC_DRAW_REC  CLITERAL(Rectangle){0,0,BOARD_CANVAS_WIDTH,-BOARD_CANVAS_HEIGHT}
-#define DEST_DRAW_REC CLITERAL(Rectangle){BOARD_CANVAS_PADDING,BOARD_CANVAS_PADDING,BOARD_CANVAS_WIDTH,BOARD_CANVAS_HEIGHT}
-#define ORIGIN CLITERAL(Vector2){0,0}
+    float scale;
+    float displaypiece_scale;
 
-Font tetris_get_font(void);
-void tetris_load_fonts(void);
-void tetris_unload_fonts(void);
+    Vector2 board_offset;
+    Vector2 nextpieces_offset;
+    Vector2 holdpiece_offset;
+    Vector2 score_offset;
+};
 
-void draw_tetris_game(TetrisGame *game);
+extern struct DrawInfo drawinfo;
 
 #endif

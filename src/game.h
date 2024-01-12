@@ -12,21 +12,40 @@ typedef enum TetrisGameState {
     TGS_COUNT
 } TetrisGameState;
 
+typedef enum TspinType {
+    TST_NONE = 0,
+    TST_PROPER,
+    TST_MINI,
+    TST_COUNT
+} TspinType;
+
 #define BOARD_DEFAULT_ROWS 20
 #define BOARD_DEFAULT_COLS 10
 #define PIECE_LOOKAHEAD_COUNT 5
 #define PIECE_START_POS(rows,cols) CLITERAL(Position) { 0, ((cols)/2)-2 }
 #define TETRIS_GAME_MAX_SCORE_TEXT_LEN 127
+#define TETRIS_GAME_US_UNTIL_FINALIZATION_AFTER_ROTATION 1000000
+#define TETRIS_GAME_US_UNTIL_KEY_CAN_BE_HELD 300000
+#define TETRIS_GAME_POS_IS_ON_BOARD(game, row, col) \
+    (((row) > 0 && (row) < (game)->rows) && ((col) > 0 && (col) < (game)->cols))
+#define TETRIS_GAME_SET_UPDATE_SPEED(game, tps) do { \
+    (game)->ticks_per_sec = (tps);                   \
+    (game)->us_per_update = (timestamp_t)((float)US_IN_A_SECOND)/((float)(game)->ticks_per_sec); \
+} while (0);
 typedef struct TetrisGame {
     int             level;
     int             score;
     int             rowscompleted;
+    int             nblocks_filled;
     int             combo;
     int             difficult_combo;
     int             tetris;
+    TspinType       tspin;
     bool            softdropping;
-    bool            justtouchedpiece;
-    int             nblocks_filled;
+
+    timestamp_t     justrotated;
+    timestamp_t     lastmoved;
+    bool            repeatmovementkeys;
 
     int             rows;
     int             cols;
@@ -34,20 +53,24 @@ typedef struct TetrisGame {
 
     NextPieceList   nextpiece_list;
     Tetrimino       activepiece;
-    Position        activepiece_pos;
     Tetrimino       holdpiece;
-
-    RenderTexture2D canvas;
-
-    TetrisGameState state;
+    Position        activepiece_pos;
 
     uint64_t        ticks_per_sec;
+    timestamp_t     us_per_update;
+
+    TetrisGameState state;
 } TetrisGame;
 
-void tetris_game_new(TetrisGame *game, int winwidth, int winheight, int rows, int cols);
+void tetris_game_new(TetrisGame *game, int rows, int cols);
 void tetris_game_free(TetrisGame *game);
 
-void tetris_game_handle_user_input(TetrisGame *game);
-void tetris_game_update(TetrisGame *game);
+void tetris_game_handle_user_input(TetrisGame *game, timestamp_t dt);
+void tetris_game_update(TetrisGame *game, timestamp_t dt);
+
+Position tetris_game_find_hard_drop_position(TetrisGame *);
+
+void draw_init(TetrisGame *);
+void draw_tetris_game(TetrisGame *);
 
 #endif

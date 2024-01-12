@@ -1,15 +1,19 @@
 #include "common.h"
 #include "game.h"
 
-void tetris_game_new(TetrisGame *game, int canvaswidth, int canvasheight, int rows, int cols) {
+void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->level = 1;
     game->score = 0;
     game->rowscompleted = 0;
-    game->combo = -1;
-    game->difficult_combo = -1;
-    game->softdropping = false;
-    game->justtouchedpiece = false;
     game->nblocks_filled = 0;
+    game->combo = 0;
+    game->difficult_combo = 0;
+    game->softdropping = false;
+    game->tspin = TST_NONE;
+
+    game->justrotated = 0;
+    game->lastmoved = 0;
+    game->repeatmovementkeys = false;
 
     game->rows = rows;
     game->cols = cols;
@@ -22,9 +26,9 @@ void tetris_game_new(TetrisGame *game, int canvaswidth, int canvasheight, int ro
     game->activepiece_pos = PIECE_START_POS(game->rows, game->cols);
     game->holdpiece = tetrimino_new(TT_EMPTY);
 
-    game->canvas = LoadRenderTexture(canvaswidth, canvasheight);
+    draw_init(game);
 
-    game->ticks_per_sec = 2;
+    TETRIS_GAME_SET_UPDATE_SPEED(game, 1);
 
     game->state = TGS_IN_PLAY;
 }
@@ -39,12 +43,10 @@ void tetris_game_free(TetrisGame *game) {
 }
 
 void tetris_game_restart(TetrisGame *game) {
-    int canvaswidth = game->canvas.texture.width;
-    int canvasheight = game->canvas.texture.height;
     int rows = game->rows;
     int cols = game->cols;
     tetris_game_free(game);
-    tetris_game_new(game, canvaswidth, canvasheight, rows, cols);
+    tetris_game_new(game, rows, cols);
 }
 
 bool tetris_game_try_fit_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
@@ -123,46 +125,52 @@ void tetris_game_clear_completed_rows(TetrisGame *game) {
         }
     }
 
-    // no score to add
-    if (!nrows_complete) return;
-
-    if ((game->rowscompleted % 10) + nrows_complete >= 10) {
-        ++game->level;
-        ++game->ticks_per_sec;
-    }
-    game->rowscompleted += nrows_complete;
-
     int scoregained = 0;
     bool difficult = false;
     bool got_tetris = false;
-    switch (nrows_complete) {
-    case 1: 
-        scoregained = 100 * game->level;
-        break;
-    case 2:
-        scoregained = 300 * game->level;
-        break;
-    case 3:
-        scoregained = 500 * game->level;
-        break;
-    case 4:
-        scoregained = 800 * game->level;
-        ++game->difficult_combo;
-        got_tetris = true;
-        break;
+
+    // no score to add
+    if (!nrows_complete && !game->tspin) {
+        scoregained = 0;
+        goto adjust_state_and_return;
     }
 
-    // Combo bonuses
-    if (game->combo) {
-        scoregained += 50 * game->combo * game->level;
+    // Action score
+    if (game->tspin == TST_MINI) {
+        switch (nrows_complete) {
+        case 0: scoregained = 100 * game->level; break;
+        case 1: scoregained = 200 * game->level; break;
+        case 2: scoregained = 400 * game->level; break;
+        default: break;
+        }
+    } else if (game->tspin == TST_PROPER) {
+        scoregained = 400*(1+nrows_complete)*game->level;
     } else {
-        game->combo = -1;
+        switch (nrows_complete) {
+        case 1: scoregained = 100 * game->level; break;
+        case 2: scoregained = 300 * game->level; break;
+        case 3: scoregained = 500 * game->level; break;
+        case 4: {
+            scoregained = 800 * game->level; 
+            difficult = true;
+            ++game->difficult_combo; 
+            got_tetris = true;
+        } break;
+        }
     }
+
+    // Award difficult combo for Tspins
+    if (game->tspin && nrows_complete > 0) {
+        difficult = true;
+        ++game->difficult_combo;
+    }
+
+    // Combo bonuses and management
+    if (game->combo)
+        scoregained += 50 * game->combo * game->level;
+    ++game->combo;
     if (game->difficult_combo > 0)
         scoregained *= 1.5;
-    ++game->combo;
-    if (!difficult) 
-        game->difficult_combo = -1;
 
     // Perfect clear bonuses
     game->nblocks_filled -= nrows_complete * game->cols;
@@ -189,10 +197,89 @@ void tetris_game_clear_completed_rows(TetrisGame *game) {
     }
     }
 
+adjust_state_and_return:
+    if (!nrows_complete) 
+        game->combo = 0;
+    else
+        ++game->combo;
+
+    if (!difficult) 
+        game->difficult_combo = 0;
+    else
+        ++game->difficult_combo;
+
     if (!got_tetris)
         game->tetris = false;
+    else
+        game->tetris = true;
 
+    if ((game->rowscompleted % 10) + nrows_complete >= 10) {
+        ++game->level;
+        ++game->ticks_per_sec;
+    }
+
+    game->rowscompleted += nrows_complete;
     game->score += scoregained;
+}
+
+TspinType tetris_game_check_for_tspin(TetrisGame *game) {
+    if (!game->justrotated) return false;
+    if (game->activepiece.type != TT_T) return false;
+
+    Position frontoff1, frontoff2;
+    Position const _pos = game->activepiece_pos;
+    switch (game->activepiece.orientation) {
+    case TO_ZERO: {
+        frontoff1 = CLITERAL(Position){ _pos.col,   _pos.row   };
+        frontoff2 = CLITERAL(Position){ _pos.col+2, _pos.row   };} break;
+    case TO_L: {
+        frontoff1 = CLITERAL(Position){ _pos.col,   _pos.row   };
+        frontoff2 = CLITERAL(Position){ _pos.col  , _pos.row+2 };} break;
+    case TO_180: {
+        frontoff1 = CLITERAL(Position){ _pos.col,   _pos.row+2 };
+        frontoff2 = CLITERAL(Position){ _pos.col+2, _pos.row+2 };} break;
+    case TO_R: {
+        frontoff1 = CLITERAL(Position){ _pos.col+2, _pos.row   };
+        frontoff2 = CLITERAL(Position){ _pos.col+2, _pos.row+2 };} break;
+    case TO_COUNT: {
+        fprintf(stderr, "tetris_game_check_for_tspin(): game->activepiece.orientation is TO_COUNT\n");
+        exit(1);
+    }
+    }
+
+    int nminosbehind = 0, row, col;
+    Tetrimino const _piece = game->activepiece;
+    if (_piece.orientation == TO_L || _piece.orientation == TO_R) {
+        col = (_piece.orientation == TO_L) ? _pos.col + 2 : _pos.col;
+        if (col < 0)
+            for (row = _pos.col; row < _pos.row+3; ++row)
+                if (TETRIS_GAME_POS_IS_ON_BOARD(game, row, col)
+                        &&game->board[row][col]) 
+                    ++nminosbehind;
+    } else {
+        row = (_piece.orientation == TO_180) ? _pos.row + 2 : _pos.col;
+        if (row != 0) 
+            for (col = _pos.col; col < _pos.col+3; ++col)
+                if (TETRIS_GAME_POS_IS_ON_BOARD(game, row, col)
+                        && game->board[row][col]) 
+                    ++nminosbehind;
+    }
+
+    int nminosfront = 0;
+    if (TETRIS_GAME_POS_IS_ON_BOARD(game, frontoff1.row, frontoff1.col)
+            && game->board[frontoff1.row][frontoff1.col])
+        ++nminosfront;
+    if (TETRIS_GAME_POS_IS_ON_BOARD(game, frontoff2.row, frontoff2.col)
+            && game->board[frontoff2.row][frontoff2.col])
+        ++nminosfront;
+
+    if (nminosfront == 2 && nminosbehind == 1) {
+        return TST_PROPER;
+    } else if (nminosfront == 1 && nminosbehind == 2) {
+        return TST_MINI;
+    } else {
+        return TST_NONE;
+    }
 }
 
 void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
@@ -217,12 +304,14 @@ void tetris_game_try_rotate_piece(TetrisGame *game, TetriminoRotationDirection c
                 .col=(game->activepiece_pos.col + kickoffsets[i].col),
             };
             if (tetris_game_try_fit_piece(game, &game->activepiece, _pos)) {
+                game->tspin = tetris_game_check_for_tspin(game); // NONE, PROPER, or MINI
                 game->activepiece_pos = _pos;
                 return;
             }
         }
         tetrimino_rotate(&game->activepiece, opposite_rotation_direction(dir));
     }
+    game->justrotated = TETRIS_GAME_US_UNTIL_FINALIZATION_AFTER_ROTATION;
 }
 
 bool tetris_game_try_move_piece(TetrisGame *game, TetriminoMoveDirection const dir) {
@@ -269,7 +358,7 @@ bool tetris_game_try_move_piece(TetrisGame *game, TetriminoMoveDirection const d
     return true;
 }
 
-void tetris_game_hard_drop(TetrisGame *game) {
+Position tetris_game_find_hard_drop_position(TetrisGame *game) {
     int mindist_to_stack = INT_MAX;
     int dist;
     int lowestrow;
@@ -293,48 +382,60 @@ void tetris_game_hard_drop(TetrisGame *game) {
             mindist_to_stack = dist;
         }
     }
-    Position const placepos = {
+
+    return CLITERAL(Position) {
         game->activepiece_pos.row + mindist_to_stack,
         game->activepiece_pos.col 
     };
-    game->score += 2*mindist_to_stack;
+}
+
+void tetris_game_hard_drop(TetrisGame *game) {
+    Position const placepos = tetris_game_find_hard_drop_position(game);
+    game->score += 2 * (placepos.row - game->activepiece_pos.row);
     tetris_game_finalize_piece(game, &game->activepiece, placepos);
 }
 
-void tetris_game_handle_user_input(TetrisGame *game) {
+void tetris_game_handle_input_for_piece_movement(TetrisGame *game, timestamp_t dt) {
+    bool (*keyhandler)(int key) = IsKeyPressed;
+    if (!game->repeatmovementkeys
+            || dt - game->lastmoved > TETRIS_GAME_US_UNTIL_KEY_CAN_BE_HELD) {
+        keyhandler = IsKeyDown;
+        game->repeatmovementkeys = true;
+    }
+
+    if (keyhandler(KEY_UP)) {
+        tetris_game_try_rotate_piece(game, TRD_CW);
+    } else if (keyhandler(KEY_DOWN)) {
+        tetris_game_try_rotate_piece(game, TRD_CCW);
+    } else if (keyhandler(KEY_LEFT)) {
+        tetris_game_try_move_piece(game, TMD_WEST);
+    } else if (keyhandler(KEY_RIGHT)) {
+        tetris_game_try_move_piece(game, TMD_EAST);
+    } 
+
+    if (IsKeyPressed(KEY_SPACE)) {
+        tetris_game_hard_drop(game);
+    } else if (IsKeyPressed(KEY_C)) {
+        tetris_game_hold_piece(game);
+    }
+
+    if (IsKeyReleased(KEY_UP) || IsKeyReleased(KEY_DOWN) 
+            || IsKeyReleased(KEY_LEFT) || IsKeyReleased(KEY_RIGHT)) {
+        game->repeatmovementkeys = false;
+    }
+}
+
+void tetris_game_handle_user_input(TetrisGame *game, timestamp_t dt) {
     if (game->state == TGS_IN_PLAY) {
-        bool _piecetouched = false;
+        tetris_game_handle_input_for_piece_movement(game, dt);
 
-        if (IsKeyPressed(KEY_UP)) {
-            tetris_game_try_rotate_piece(game, TRD_CW);
-            _piecetouched = true;
-        } else if (IsKeyPressed(KEY_DOWN)) {
-            tetris_game_try_rotate_piece(game, TRD_CCW);
-            _piecetouched = true;
-        } else if (IsKeyPressed(KEY_LEFT)) {
-            tetris_game_try_move_piece(game, TMD_WEST);
-            _piecetouched = true;
-        } else if (IsKeyPressed(KEY_RIGHT)) {
-            tetris_game_try_move_piece(game, TMD_EAST);
-            _piecetouched = true;
-        } else if (IsKeyPressed(KEY_SPACE)) {
-            tetris_game_hard_drop(game);
-            _piecetouched = true;
-        } else if (IsKeyPressed(KEY_C)) {
-            tetris_game_hold_piece(game);
-            _piecetouched = true;
-        }
-
+        // soft dropping
         if (IsKeyPressed(KEY_LEFT_SHIFT)) {
             game->softdropping = true;
-            game->ticks_per_sec *= 3;
+            TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec*3);
         } else if (IsKeyReleased(KEY_LEFT_SHIFT)) {
             game->softdropping = false;
-            game->ticks_per_sec /= 3;
-        }
-
-        if (!_piecetouched) {
-            game->justtouchedpiece = false;
+            TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec/3);
         }
     } else if (game->state == TGS_GAME_OVER) {
         if (IsKeyPressed(KEY_SPACE)) {
@@ -343,7 +444,9 @@ void tetris_game_handle_user_input(TetrisGame *game) {
     }
 }
 
-void tetris_game_update(TetrisGame *game) {
+void tetris_game_update(TetrisGame *game, timestamp_t dt) {
+    UNUSED(dt);
+
     if (game->state != TGS_IN_PLAY) return;
 
     // check for landing
@@ -356,19 +459,31 @@ void tetris_game_update(TetrisGame *game) {
             }
         }
     }
+
+    bool piece_at_bottom = false;
     for (int c = 0; c < 4; ++c) {
         if (lowestrow[c] < 0) continue; // column is empty
         int const _row = game->activepiece_pos.row + lowestrow[c] + 1;
         int const _col = game->activepiece_pos.col + c;
-        if ((_col >= 0 && _col < game->cols) 
-                && (_row >= game->rows || game->board[_row][_col])
-                && !game->justtouchedpiece) {
-            tetris_game_finalize_piece(game, &game->activepiece, game->activepiece_pos);
-            return;
+        piece_at_bottom = ((_col >= 0 && _col < game->cols) && (_row >= game->rows || game->board[_row][_col]));
+        bool const time_to_finalize_piece = (!game->justrotated || game->tspin);
+        if (piece_at_bottom) {
+            if (time_to_finalize_piece) {
+                tetris_game_finalize_piece(game, &game->activepiece, game->activepiece_pos);
+                if (game->tspin) {
+                    printf("Tspin!\n");
+                }
+                return;
+            } else {
+                break;
+            }
         }
     }
 
-    ++game->activepiece_pos.row;
     if (game->softdropping) ++game->score;
+
+    if (!piece_at_bottom) ++game->activepiece_pos.row;
+
+    game->justrotated = 0;
 }
 

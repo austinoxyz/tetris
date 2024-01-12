@@ -6,13 +6,13 @@
 
 typedef enum TetriminoType {
     TT_EMPTY = 0,
-    TT_STRAIGHT, 
-    TT_SQUARE, 
+    TT_I, 
+    TT_O, 
     TT_T, 
-    TT_L1, 
-    TT_L2, 
-    TT_SKEW1, 
-    TT_SKEW2, 
+    TT_J, 
+    TT_L, 
+    TT_S, 
+    TT_Z, 
     TT_COUNT
 } TetriminoType;
 
@@ -23,21 +23,19 @@ typedef enum TetriminoOrientation {
     TO_R,
     TO_COUNT
 } TetriminoOrientation;
-
-typedef enum TetriminoMoveDirection {
-    TMD_EAST = 0,
-    TMD_WEST,
-    TMD_COUNT
-} TetriminoMoveDirection;
-
+#define ROTATE_ORIENTATION(dir, ori) \
+    ((TetriminoOrientation)(((dir)+((ori)==TRD_CW?-1:1))%TO_COUNT))
 typedef enum TetriminoRotationDirection {
     TRD_CW = 0,
     TRD_CCW,
     TRD_COUNT
 } TetriminoRotationDirection;
 
-#define ROTATE_ORIENTATION(dir, ori) \
-    ((TetriminoOrientation)(((dir)+((ori)==TRD_CW?-1:1))%TO_COUNT))
+typedef enum TetriminoMoveDirection {
+    TMD_EAST = 0,
+    TMD_WEST,
+    TMD_COUNT
+} TetriminoMoveDirection;
 
 TetriminoRotationDirection opposite_rotation_direction(TetriminoRotationDirection const);
 
@@ -54,6 +52,7 @@ void      tetrimino_rotate(Tetrimino *tetrimino, TetriminoRotationDirection cons
 
 typedef Position KickOffset;
 
+void get_tetrimino_layout(TetriminoLayout, TetriminoType);
 void get_kick_offsets(KickOffset *offsets, Tetrimino *tetrimino, TetriminoRotationDirection const dir);
 
 #endif

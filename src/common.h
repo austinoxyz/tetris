@@ -15,8 +15,10 @@
 #include <sys/time.h>
 
 #include <raylib.h>
+#include <raymath.h>
+#include <rlgl.h>
 
-#include "log.h"
+#include "util.h"
 
 #define STR(x) #x
 #define UNUSED(x) {(void)x;}

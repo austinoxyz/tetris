@@ -18,5 +18,6 @@ void      nextpiecelist_free(NextPieceList*);
 void      nextpiecelist_generate_bag(NextPieceList*, int); // arg2: [0,1] - denotes bag number
 Tetrimino nextpiecelist_pop_next_piece(NextPieceList*);
 Tetrimino nextpiecelist_peek_next_piece(NextPieceList*);
+TetriminoType nextpiecelist_piecetype_n_ahead(NextPieceList*,int);
 
 #endif

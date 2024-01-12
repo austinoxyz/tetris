@@ -2,13 +2,13 @@
 
 static const TetriminoLayout tetrimino_layout[TT_COUNT] = {
     {{0,0,0,0},{0,0,0,0},{0,0,0,0},{0,0,0,0}}, // TT_EMPTY
-    {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}}, // TT_STRAIGHT
-    {{1,1,0,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_SQUARE
+    {{0,0,0,0},{1,1,1,1},{0,0,0,0},{0,0,0,0}}, // TT_I
+    {{1,1,0,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_O
     {{0,1,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // TT_T
-    {{1,0,0,0},{1,0,0,0},{1,1,0,0},{0,0,0,0}}, // TT_L1
-    {{0,1,0,0},{0,1,0,0},{1,1,0,0},{0,0,0,0}}, // TT_L2
-    {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_SKEW1
-    {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}  // TT_SKEW2
+    {{1,0,0,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // TT_J
+    {{0,0,1,0},{1,1,1,0},{0,0,0,0},{0,0,0,0}}, // TT_L
+    {{0,1,1,0},{1,1,0,0},{0,0,0,0},{0,0,0,0}}, // TT_S
+    {{1,1,0,0},{0,1,1,0},{0,0,0,0},{0,0,0,0}}  // TT_Z
 };
 
 static const KickOffset kick_offsets[3][TO_COUNT][5] = {
@@ -29,6 +29,11 @@ static const KickOffset kick_offsets[3][TO_COUNT][5] = {
      {{-1,+0},{-1,+0},{-1,+0},{-1,+0},{-1,+0}}}  // TO_R
 };
 
+void get_tetrimino_layout(TetriminoLayout layout, TetriminoType type) {
+    if (type == TT_COUNT) return;
+    memcpy(layout, tetrimino_layout[type], sizeof(TetriminoLayout));
+}
+
 void get_kick_offsets(KickOffset *offsets, Tetrimino *tetrimino, TetriminoRotationDirection const dir) {
     if (!offsets) {
         fprintf(stderr, "get_kick_offsets(): Passed NULL value for KickOffsets *offsets\n");
@@ -37,17 +42,13 @@ void get_kick_offsets(KickOffset *offsets, Tetrimino *tetrimino, TetriminoRotati
 
     int id = 0;
     switch (tetrimino->type) {
-    case TT_SQUARE:
+    case TT_O:
         id = 2;
         break;
-    case TT_STRAIGHT:
+    case TT_I:
         id = 1;
         break;
-    case TT_T:
-    case TT_L1: 
-    case TT_L2: 
-    case TT_SKEW1:
-    case TT_SKEW2: 
+    case TT_T: case TT_J: case TT_L: case TT_S: case TT_Z: 
         id = 0;
         break;
     default: {
@@ -84,9 +85,9 @@ void tetrimino_rotate(Tetrimino *tetrimino, TetriminoRotationDirection const dir
     }
 
     // O-tetrimino can't rotate
-    if (tetrimino->type == TT_SQUARE) return;
+    if (tetrimino->type == TT_O) return;
 
-    int bb_width = (tetrimino->type == TT_STRAIGHT) ? 4 : 3;
+    int bb_width = (tetrimino->type == TT_I) ? 4 : 3;
 
     // transpose
     for (int r = 0; r < bb_width; ++r)
@@ -96,7 +97,7 @@ void tetrimino_rotate(Tetrimino *tetrimino, TetriminoRotationDirection const dir
             tetrimino->layout[c][r] = tmp;
         }
 
-    // reverse rows for CW, cols for CCW
+    // reverse rows for CW, cols for CCW (after transposing)
     if (dir == TRD_CW) {
         for (int r = 0; r < bb_width; ++r) {
             for (int c = 0; c < bb_width/2; ++c) {
@@ -120,7 +121,7 @@ Tetrimino tetrimino_new(TetriminoType type) {
     Tetrimino result;
     result.type = (TetriminoType)type;
     result.orientation = TO_ZERO;
-    memcpy(result.layout, tetrimino_layout[type], sizeof(TetriminoLayout));
+    get_tetrimino_layout(result.layout, type);
     return result;
 }
 
