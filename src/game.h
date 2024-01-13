@@ -3,7 +3,7 @@
 
 #include <raylib.h>
 
-#include "tetrimino_list.h"
+#include "tetriminolist.h"
 
 typedef enum TetrisGameState {
     TGS_IN_PLAY = 0,
@@ -53,13 +53,17 @@ typedef struct TetrisGame {
 
     NextPieceList   nextpiece_list;
     Tetrimino       activepiece;
-    Tetrimino       holdpiece;
     Position        activepiece_pos;
+
+    Tetrimino       holdpiece;
+    bool            pieceheld;
 
     uint64_t        ticks_per_sec;
     timestamp_t     us_per_update;
 
     TetrisGameState state;
+
+    bool debug;
 } TetrisGame;
 
 void tetris_game_new(TetrisGame *game, int rows, int cols);

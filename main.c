@@ -9,10 +9,9 @@ static TetrisGame game;
 
 void init(void) {
     srand(time(NULL));
-    window_init(1);
+    window_init(1.1);
     tetris_game_new(&game, BOARD_DEFAULT_ROWS, BOARD_DEFAULT_COLS);
     SetTargetFPS(60);
-    SetTextLineSpacing(32);
 }
 
 void cleanup(void) {

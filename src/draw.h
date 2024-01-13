@@ -5,6 +5,11 @@
 #include "window.h"
 
 struct DrawInfo {
+    int fontsize;
+    int fontspacing;
+    int fontlinespacing;
+    int fontheight;
+
     int canvaswidth, canvasheight;
 
     float boardaspect;
@@ -16,9 +21,11 @@ struct DrawInfo {
     float displaypiece_scale;
 
     Vector2 board_offset;
-    Vector2 nextpieces_offset;
-    Vector2 holdpiece_offset;
+    Vector2 sidebar_offset;
     Vector2 score_offset;
+    Vector2 gameover_offset;
+
+    float sidebar_borderwidth;
 };
 
 extern struct DrawInfo drawinfo;
