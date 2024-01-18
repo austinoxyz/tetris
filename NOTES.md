@@ -7,12 +7,6 @@
 4. https://tetris.wiki/T-Spin
 
 ## Things to implement
-1. Difficult move identification and scoring
-2. Better input feel
+1. Better input feel
     - ability to hold down movement/rotate keys
-3. Pause and game over state screens
-4. Ghost piece silhouette
-5. Draw Rest of the scene 
-    - hold slot
-    - upcoming tetriminoes
-6. T-spin identification and scoring
+2. Pause and game over state screens
