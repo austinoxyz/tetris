@@ -14,7 +14,6 @@ void tetris_game_new(TetrisGame *game, int rows, int cols) {
 
     game->justrotated = 0;
     game->lastmoved = 0;
-    game->repeatmovementkeys = false;
 
     game->rows = rows;
     game->cols = cols;
@@ -393,56 +392,43 @@ void tetris_game_hard_drop(TetrisGame *game) {
     tetris_game_finalize_piece(game, &game->activepiece, placepos);
 }
 
-void tetris_game_handle_input_for_piece_movement(TetrisGame *game, timestamp_t dt) {
-    bool (*_keyhandler)(int key) = IsKeyPressed;
-
-    if (game->debug) {
-        if (_keyhandler(TETRIS_KEYBIND_RESTART)) {
-            tetris_game_restart(game);
-        }
-    }
-
-    if (_keyhandler(TETRIS_KEYBIND_TOGGLE_DEBUG)) {
-        game->debug = !game->debug;
-    }
-
-    if (!game->repeatmovementkeys
-            || dt - game->lastmoved > TETRIS_GAME_US_UNTIL_KEY_CAN_BE_HELD) {
-        _keyhandler = IsKeyDown;
-        game->repeatmovementkeys = true;
-    }
-
-    if (_keyhandler(TETRIS_KEYBIND_ROTATE_CW)) {
-        tetris_game_try_rotate_piece(game, TRD_CW);
-    } else if (_keyhandler(TETRIS_KEYBIND_ROTATE_CCW)) {
-        tetris_game_try_rotate_piece(game, TRD_CCW);
-    } else if (_keyhandler(TETRIS_KEYBIND_MOVE_LEFT)) {
-        tetris_game_try_move_piece(game, TMD_WEST);
-    } else if (_keyhandler(TETRIS_KEYBIND_MOVE_RIGHT)) {
-        tetris_game_try_move_piece(game, TMD_EAST);
-    } 
-
-    if (IsKeyPressed(TETRIS_KEYBIND_HARD_DROP)) {
-        tetris_game_hard_drop(game);
-    } else if (IsKeyPressed(TETRIS_KEYBIND_HOLD_PIECE)) {
-        tetris_game_hold_piece(game);
-    }
-
-    if (IsKeyReleased(KEY_UP) || IsKeyReleased(KEY_DOWN) 
-            || IsKeyReleased(KEY_LEFT) || IsKeyReleased(KEY_RIGHT)) {
-        game->repeatmovementkeys = false;
-    }
-}
-
-void tetris_game_handle_user_input(TetrisGame *game, timestamp_t dt) {
+void tetris_game_handle_user_input(TetrisGame *game) {
     if (game->state == TGS_IN_PLAY) {
-        tetris_game_handle_input_for_piece_movement(game, dt);
+        if (game->debug) {
+            if (IsKeyPressed(TETRIS_KEYBIND_RESTART)) {
+                tetris_game_restart(game);
+                return;
+            }
+        }
 
-        // soft dropping
-        if (IsKeyPressed(KEY_LEFT_SHIFT)) {
+        if (IsKeyPressed(TETRIS_KEYBIND_TOGGLE_DEBUG)) {
+            game->debug = !game->debug;
+        }
+
+        if (IsKeyPressed(TETRIS_KEYBIND_ROTATE_CW)) {
+            tetris_game_try_rotate_piece(game, TRD_CW);
+        } 
+        if (IsKeyPressed(TETRIS_KEYBIND_ROTATE_CCW)) {
+            tetris_game_try_rotate_piece(game, TRD_CCW);
+        } 
+        if (IsKeyPressed(TETRIS_KEYBIND_MOVE_LEFT)) {
+            tetris_game_try_move_piece(game, TMD_WEST);
+        } 
+        if (IsKeyPressed(TETRIS_KEYBIND_MOVE_RIGHT)) {
+            tetris_game_try_move_piece(game, TMD_EAST);
+        } 
+
+        if (IsKeyPressed(TETRIS_KEYBIND_HARD_DROP)) {
+            tetris_game_hard_drop(game);
+        } 
+        if (IsKeyPressed(TETRIS_KEYBIND_HOLD_PIECE)) {
+            tetris_game_hold_piece(game);
+        }
+
+        if (IsKeyPressed(TETRIS_KEYBIND_SOFT_DROP)) {
             game->softdropping = true;
             TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec*3);
-        } else if (IsKeyReleased(KEY_LEFT_SHIFT)) {
+        } else if (IsKeyReleased(TETRIS_KEYBIND_SOFT_DROP)) {
             game->softdropping = false;
             TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec/3);
         }

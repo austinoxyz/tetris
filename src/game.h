@@ -45,7 +45,6 @@ typedef struct TetrisGame {
 
     timestamp_t     justrotated;
     timestamp_t     lastmoved;
-    bool            repeatmovementkeys;
 
     int             rows;
     int             cols;
@@ -69,7 +68,7 @@ typedef struct TetrisGame {
 void tetris_game_new(TetrisGame *game, int rows, int cols);
 void tetris_game_free(TetrisGame *game);
 
-void tetris_game_handle_user_input(TetrisGame *game, timestamp_t dt);
+void tetris_game_handle_user_input(TetrisGame *game);
 void tetris_game_update(TetrisGame *game, timestamp_t dt);
 
 Position tetris_game_find_hard_drop_position(TetrisGame *);

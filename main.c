@@ -20,17 +20,21 @@ void cleanup(void) {
 }
 
 void main_loop(void) {
-    timestamp_t us_counter = 0;
-    timestamp_t then = current_time_us();
-    timestamp_t now, dt;
+    timestamp_t now, then = current_time_us();
+    timestamp_t _dt, dt = 0;
     while (!WindowShouldClose()) {
         draw_tetris_game(&game);
 
-        now = current_time_us(), dt = (now - then);
-        tetris_game_handle_user_input(&game, dt);
-        if ((us_counter+=dt)>game.us_per_update) {
+        now = current_time_us(), _dt = (now - then);
+        tetris_game_handle_user_input(&game);
+        if ((dt+=_dt)>game.us_per_update) {
             tetris_game_update(&game, dt);
-            us_counter %= game.us_per_update;
+
+            // NOTE:
+            // taking modulus of us_per_update instead of substracting it off the counter
+            // prevents from the game doing many updates quickly to catch back up 
+            // after the game comes in and out focus
+            dt %= game.us_per_update;
         }
         then = now;
     }
