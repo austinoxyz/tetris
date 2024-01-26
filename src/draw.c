@@ -9,7 +9,7 @@
 #define TETRIS_FONT_SPACING_DEFAULT 8
 #define TETRIS_RAYCLEAR (CLITERAL(Color) {(RAYWHITE).r, (RAYWHITE).g, (RAYWHITE).b, 120})
 
-#define BLOCK_POS(row,col,sidelen) (CLITERAL(Vector2){(col)*(sidelen),(row)*(sidelen)})
+#define BLOCK_POS(row, col, sidelen) (CLITERAL(Vector2){(col)*(sidelen),(row)*(sidelen)})
 
 struct DrawInfo info;
 
@@ -75,7 +75,8 @@ void draw_init(TetrisGame *game) {
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
-    DrawRectangleV(pos, CLITERAL(Vector2) {sidelen,sidelen}, color);
+    ++pos.x;
+    DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
              pos.x+0.8f*sidelen,pos.y+0.8f*sidelen, BLACK);
 }
@@ -96,9 +97,9 @@ void draw_tetris_game_board(TetrisGame *game) {
     rlTranslatef(info.board_offset.x, info.board_offset.y, 0);
 
     // draw gridlines
-    for (int r = 0; r <= game->rows+1; ++r)
+    for (int r = 0; r <= game->rows+2; ++r)
         DrawLine(0, r * info.blocksidelen, (game->cols+2)*info.blocksidelen, r * info.blocksidelen, BLACK);
-    for (int c = 0; c <= game->cols+1; ++c)
+    for (int c = 0; c <= game->cols+2; ++c)
         DrawLine(c * info.blocksidelen, 0, c * info.blocksidelen, (game->rows+2)*info.blocksidelen, BLACK);
 
     // draw boundary
@@ -268,15 +269,24 @@ void draw_tetris_game_piece_sidebar(TetrisGame *game) {
     rlPopMatrix();
 }
 
+void draw_tetris_game_main_menu(TetrisGame *game) {
+    UNUSED(game);
+    UNIMPLEMENTED();
+}
+
 void draw_tetris_game(TetrisGame *game) {
     BeginDrawing();
     ClearBackground(TETRIS_RAYCLEAR);
 
-    draw_tetris_game_board(game);
-    draw_tetris_game_piece_sidebar(game);
-    draw_tetris_game_score(game);
+    if (game->state == TGS_MAIN_MENU) {
+        draw_tetris_game_main_menu(game);
+    } else {
+        draw_tetris_game_board(game);
+        draw_tetris_game_piece_sidebar(game);
+        draw_tetris_game_score(game);
 
-    if (game->state == TGS_GAME_OVER) draw_tetris_game_over(game);
+        if (game->state == TGS_GAME_OVER) draw_tetris_game_over(game);
+    }
 
     EndDrawing();
 }
