@@ -33,6 +33,8 @@ struct DrawInfo {
     float logoscale;
     Texture2D logo;
     Vector2 logo_offset;
+
+    Color bkgcolor, backdropcolor;
 };
 
 void draw_init(void);

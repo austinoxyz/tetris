@@ -431,10 +431,8 @@ void tetris_game_handle_user_input(TetrisGame *game) {
             TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec/3);
         }
     } else if (game->state == TGS_GAME_OVER) {
-        if (IsKeyPressed(KEY_SPACE)) {
-            printf("ITS PRESSED!\n");
+        if (IsKeyPressed(KEY_SPACE))
             tetris_game_restart(game);
-        }
     }
 }
 
