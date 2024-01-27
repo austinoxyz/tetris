@@ -74,6 +74,14 @@ void draw_init(void) {
 
     info.sidebar_borderwidth = 2;
 
+    info.logo = LoadTexture("tetris-logo.png");
+    // TODO: Scale this properly
+    info.logoscale = 0.3f;
+//        info.logo_offset = CLITERAL(Vector2){0,0};
+    info.logo_offset = CLITERAL(Vector2) {
+        .x=((window_width() - info.logoscale*info.logo.width)/2),
+        .y=((g_mainmenu.buttons.play.bounds.x - info.logoscale*info.logo.height)/2 + info.logoscale*info.logo.height/2 - 0.02*window_height()),
+    };
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
@@ -273,33 +281,23 @@ void draw_piece_sidebar(void) {
 void draw_button(Button *button) {
     DrawRectangleRec(button->bounds, button->color);
     DrawRectangleLinesEx(button->bounds, 2, BLACK);
-//    textdim = MeasureTextEx(info.font, g_mainmenu.button.play.text, 20, info.fontspacing);
-//    textpos = g_mainmenu.buttons.play.bounds.x + (g_mainmenu.buttons.play.bounds.width + texdim.x)/2;
+    Vector2 textdim = MeasureTextEx(info.font, button->text, 60, info.fontspacing);
+    Vector2 textpos = CLITERAL(Vector2) {
+        .x=(button->bounds.x + (button->bounds.width + textdim.x)/2 - textdim.x),
+        .y=(button->bounds.y + (button->bounds.height + textdim.y)/2 - textdim.y)
+    };
+    DrawTextEx(info.font, button->text, textpos, 60, info.fontspacing, BLACK);
 }
 
 void draw_mainmenu(void) {
     if (g_game.state != TGS_MAIN_MENU) return;
 
-    Vector2 textpos, textdim;
-    UNUSED(textpos);
-    UNUSED(textdim);
-
     BeginDrawing();
     ClearBackground(TETRIS_RAYCLEAR);
-
-    // play button
-    draw_button(&g_mainmenu.buttons.play);
-//    DrawRectangleRec(g_mainmenu.buttons.play.bounds,     g_mainmenu.buttoncolor);
-//    DrawRectangleLinesEx(g_mainmenu.buttons.play.bounds, 2, BLACK);
-
-    draw_button(&g_mainmenu.buttons.settings);
-//    DrawRectangleRec(g_mainmenu.buttons.settings.bounds, g_mainmenu.buttoncolor);
-//    DrawRectangleLinesEx(g_mainmenu.buttons.settings.bounds, 2, BLACK);
-
-    draw_button(&g_mainmenu.buttons.quit);
-//    DrawRectangleRec(g_mainmenu.buttons.quit.bounds,     g_mainmenu.buttoncolor);
-//    DrawRectangleLinesEx(g_mainmenu.buttons.quit.bounds, 2, BLACK);
-
+        DrawTextureEx(info.logo, info.logo_offset, 0, info.logoscale, RAYWHITE);
+        draw_button(&g_mainmenu.buttons.play);
+        draw_button(&g_mainmenu.buttons.settings);
+        draw_button(&g_mainmenu.buttons.quit);
     EndDrawing();
 }
 
@@ -308,10 +306,10 @@ void draw_game(void) {
 
     BeginDrawing();
     ClearBackground(TETRIS_RAYCLEAR);
-    draw_board();
-    draw_piece_sidebar();
-    draw_score();
-    if (g_game.state == TGS_GAME_OVER) 
-        draw_game_over();
+        draw_board();
+        draw_piece_sidebar();
+        draw_score();
+        if (g_game.state == TGS_GAME_OVER) 
+            draw_game_over();
     EndDrawing();
 }

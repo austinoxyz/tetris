@@ -15,7 +15,7 @@ void mainmenu_init(void) {
     g_mainmenu.buttons.settings = CLITERAL(Button) {
         .bounds=(CLITERAL(Rectangle) {
             .x=(xoffset), 
-            .y=((window_height()-buttonheight)/2 + 0.08*window_height()), 
+            .y=((window_height()-buttonheight)/2 + 0.15*window_height()), 
             .width=(buttonwidth), 
             .height=(buttonheight)
         }),

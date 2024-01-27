@@ -29,6 +29,10 @@ struct DrawInfo {
     Vector2 gameover_offset;
 
     Font font;
+
+    float logoscale;
+    Texture2D logo;
+    Vector2 logo_offset;
 };
 
 void draw_init(void);
