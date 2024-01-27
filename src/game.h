@@ -6,7 +6,8 @@
 #include "tetriminolist.h"
 
 typedef enum TetrisGameState {
-    TGS_IN_PLAY = 0,
+    TGS_MAIN_MENU = 0,
+    TGS_IN_PLAY,
     TGS_PAUSED,
     TGS_GAME_OVER,
     TGS_COUNT
@@ -72,8 +73,5 @@ void tetris_game_handle_user_input(TetrisGame *game);
 void tetris_game_update(TetrisGame *game, timestamp_t dt);
 
 Position tetris_game_find_hard_drop_position(TetrisGame *);
-
-void draw_init(TetrisGame *);
-void draw_tetris_game(TetrisGame *);
 
 #endif

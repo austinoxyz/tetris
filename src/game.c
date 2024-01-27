@@ -28,8 +28,6 @@ void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->holdpiece = tetrimino_new(TT_EMPTY);
     game->pieceheld = false;
 
-    draw_init(game);
-
     TETRIS_GAME_SET_UPDATE_SPEED(game, 1);
 
     game->state = TGS_IN_PLAY;

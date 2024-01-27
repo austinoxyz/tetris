@@ -13,6 +13,8 @@
 
 struct DrawInfo info;
 
+extern TetrisGame g_game;
+
 Color color_of_tetrimino_type(TetriminoType const type) {
     switch (type) {
     case TT_I: return hex_to_color(0x54f7efff); // cyan
@@ -37,18 +39,25 @@ Vector2 offset_of_tetrimino_type(TetriminoType const type, const float sidelen) 
     }
 }
 
-void draw_init(TetrisGame *game) {
+void draw_init(void) {
     info.canvaswidth = window_width();
     info.canvasheight = window_height();
 
     info.scale = (((float) info.canvasheight) / WINDOW_DEFAULT_HEIGHT);
     info.displaypiece_scale = 1.2f;
 
-    info.boardaspect  = ((float)game->cols+2)/((float)game->rows+2);
+    info.boardaspect  = ((float)g_game.cols+2)/((float)g_game.rows+2);
     info.boardheight  = 0.75f * info.canvasheight;
     info.boardwidth   = info.boardaspect * info.canvaswidth;
-    info.blocksidelen = info.boardwidth / ((float)game->cols+2);
+    info.blocksidelen = info.boardwidth / ((float)g_game.cols+2);
     info.displayblocksidelen = info.displaypiece_scale * info.blocksidelen;
+
+    info.fontsize = (int) (info.scale * TETRIS_FONT_SIZE_DEFAULT);
+    info.fontspacing = (int) (info.scale * TETRIS_FONT_SPACING_DEFAULT);
+    Vector2 tmpvec = MeasureTextEx(GetFontDefault(), "AAA", info.fontsize, info.fontspacing);
+    info.fontheight = tmpvec.y;
+    info.fontlinespacing = (int) (info.scale * TETRIS_FONT_LINE_SPACING_DEFAULT);
+    SetTextLineSpacing(info.fontlinespacing);
 
     info.board_offset = CLITERAL(Vector2) {
         .x=(0.05f * info.canvaswidth), 
@@ -59,23 +68,20 @@ void draw_init(TetrisGame *game) {
     info.score_offset = CLITERAL(Vector2) {
         .x=(info.board_offset.x),
         .y=(1.5f*info.board_offset.y + info.boardheight) };
-#if 0
+#if 1
     info.gameover_offset = CLITERAL(Vector2) {
-        .x=(),
-        .y=(info.score_offset.y)
+        .x=(info.score_offset.x),
+        .y=(info.score_offset.y+2*info.fontheight)
     };
 #endif
 
     info.sidebar_borderwidth = 2;
 
-    info.fontsize = (int) (info.scale * TETRIS_FONT_SIZE_DEFAULT);
-    info.fontspacing = (int) (info.scale * TETRIS_FONT_SPACING_DEFAULT);
-    info.fontlinespacing = (int) (info.scale * TETRIS_FONT_LINE_SPACING_DEFAULT);
-    SetTextLineSpacing(info.fontlinespacing);
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
     ++pos.x;
+    ++pos.y;
     DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
              pos.x+0.8f*sidelen,pos.y+0.8f*sidelen, BLACK);
@@ -91,32 +97,32 @@ void draw_tetrimino(Tetrimino *tetrimino, Vector2 pos, float sidelen, Color colo
     }
 }
 
-void draw_tetris_game_board(TetrisGame *game) {
+void draw_tetris_game_board(void) {
     // Translate to game board position
     rlPushMatrix();
     rlTranslatef(info.board_offset.x, info.board_offset.y, 0);
 
     // draw gridlines
-    for (int r = 0; r <= game->rows+2; ++r)
-        DrawLine(0, r * info.blocksidelen, (game->cols+2)*info.blocksidelen, r * info.blocksidelen, BLACK);
-    for (int c = 0; c <= game->cols+2; ++c)
-        DrawLine(c * info.blocksidelen, 0, c * info.blocksidelen, (game->rows+2)*info.blocksidelen, BLACK);
+    for (int r = 0; r <= g_game.rows+2; ++r)
+        DrawLine(0, r * info.blocksidelen, (g_game.cols+2)*info.blocksidelen, r * info.blocksidelen, BLACK);
+    for (int c = 0; c <= g_game.cols+2; ++c)
+        DrawLine(c * info.blocksidelen, 0, c * info.blocksidelen, (g_game.rows+2)*info.blocksidelen, BLACK);
 
     // draw boundary
-    for (int c = 0; c < game->cols+2; ++c) {
+    for (int c = 0; c < g_game.cols+2; ++c) {
         draw_block(BLOCK_POS(0, c, info.blocksidelen), info.blocksidelen, GRAY);
-        draw_block(BLOCK_POS(game->rows+1, c, info.blocksidelen), info.blocksidelen, GRAY);
+        draw_block(BLOCK_POS(g_game.rows+1, c, info.blocksidelen), info.blocksidelen, GRAY);
     }
-    for (int r = 1; r <= game->rows+1; ++r) {
+    for (int r = 1; r <= g_game.rows+1; ++r) {
         draw_block(BLOCK_POS(r, 0, info.blocksidelen), info.blocksidelen, GRAY);
-        draw_block(BLOCK_POS(r, game->cols+1, info.blocksidelen), info.blocksidelen, GRAY);
+        draw_block(BLOCK_POS(r, g_game.cols+1, info.blocksidelen), info.blocksidelen, GRAY);
     }
 
     // draw placed tetriminos
-    for (int r = 0; r < game->rows; ++r) {
-        for (int c = 0; c < game->cols; ++c) {
-            if (game->board[r][c] != TT_EMPTY) {
-                Color const color = color_of_tetrimino_type(game->board[r][c]);
+    for (int r = 0; r < g_game.rows; ++r) {
+        for (int c = 0; c < g_game.cols; ++c) {
+            if (g_game.board[r][c] != TT_EMPTY) {
+                Color const color = color_of_tetrimino_type(g_game.board[r][c]);
                 Position const pos = { r+1, c+1 };
                 Vector2 drawpos = BLOCK_POS(pos.row, pos.col, info.blocksidelen);
                 draw_block(drawpos, info.blocksidelen, color);
@@ -125,8 +131,8 @@ void draw_tetris_game_board(TetrisGame *game) {
     }
 
     // draw active and ghost pieces
-    Position drawpos = game->activepiece_pos;
-    Position droppos = tetris_game_find_hard_drop_position(game);
+    Position drawpos = g_game.activepiece_pos;
+    Position droppos = tetris_game_find_hard_drop_position(&g_game);
 
     ++drawpos.row, ++drawpos.col;
     ++droppos.row, ++droppos.col;
@@ -134,23 +140,23 @@ void draw_tetris_game_board(TetrisGame *game) {
     Vector2 piecevec = BLOCK_POS(drawpos.row, drawpos.col, info.blocksidelen);
     Vector2 ghostvec = BLOCK_POS(droppos.row, droppos.col, info.blocksidelen);
 
-    Color color = color_of_tetrimino_type(game->activepiece.type);
+    Color color = color_of_tetrimino_type(g_game.activepiece.type);
     Color ghostcolor = color;
     ghostcolor.a /= 2;
 
-    draw_tetrimino(&game->activepiece, piecevec, info.blocksidelen, color);
-    draw_tetrimino(&game->activepiece, ghostvec, info.blocksidelen, ghostcolor);
+    draw_tetrimino(&g_game.activepiece, piecevec, info.blocksidelen, color);
+    draw_tetrimino(&g_game.activepiece, ghostvec, info.blocksidelen, ghostcolor);
 
     rlPopMatrix();
 }
 
-void draw_tetris_game_score(TetrisGame *game) {
+void draw_tetris_game_score(void) {
     rlPushMatrix();
     rlTranslatef(info.score_offset.x, info.score_offset.y, 0);
 
     // draw score
     char scoretext[TETRIS_GAME_MAX_SCORE_TEXT_LEN];
-    sprintf(scoretext, "Level: %d\nScore: %d", game->level, game->score);
+    sprintf(scoretext, "Level: %d\nScore: %d", g_game.level, g_game.score);
     DrawTextEx(GetFontDefault(), scoretext, CLITERAL(Vector2){0,0},
             info.fontsize, info.fontspacing, BLACK);
 
@@ -158,7 +164,7 @@ void draw_tetris_game_score(TetrisGame *game) {
 }
 
 #if 0
-void draw_tetris_game_over(TetrisGame *game) {
+void draw_tetris_game_over(void) {
     UNUSED(game);
 
     const char *gameover_text = "Game Over!";
@@ -213,27 +219,25 @@ void draw_tetris_game_over(TetrisGame *game) {
 }
 #endif
 
-void draw_tetris_game_over(TetrisGame *game) {
-    UNUSED(game);
-
+void draw_tetris_game_over(void) {
     rlPushMatrix();
     rlTranslatef(info.gameover_offset.x, info.gameover_offset.y, 0);
 
     const char *gameover_text = "Game Over!";
     DrawTextEx(GetFontDefault(), gameover_text, CLITERAL(Vector2){0,0},
-            info.fontsize, info.fontspacing, RED);
+            info.fontsize * 1.5, info.fontspacing, RED);
 
     rlPopMatrix();
 }
 
-void draw_tetris_game_piece_sidebar(TetrisGame *game) {
+void draw_tetris_game_piece_sidebar(void) {
     rlPushMatrix();
     rlTranslatef(info.sidebar_offset.x, info.sidebar_offset.y, 0);
 
     // draw upcoming pieces
     Vector2 drawvec = CLITERAL(Vector2) { 0, 0 };
     for (int i = 0; i < 5; ++i) {
-        TetriminoType type = nextpiecelist_piecetype_n_ahead(&game->nextpiece_list, i);
+        TetriminoType type = nextpiecelist_piecetype_n_ahead(&g_game.nextpiece_list, i);
         Tetrimino piece = tetrimino_new(type);
         Vector2 offset = offset_of_tetrimino_type(type, info.displayblocksidelen);
         draw_tetrimino(&piece, Vector2Add(drawvec, offset), info.displayblocksidelen, color_of_tetrimino_type(type));
@@ -257,35 +261,34 @@ void draw_tetris_game_piece_sidebar(TetrisGame *game) {
     };
     DrawRectangleLinesEx(holdpiece_border, info.sidebar_borderwidth, BLACK);
 
-    if (game->holdpiece.type == TT_EMPTY) {
+    if (g_game.holdpiece.type == TT_EMPTY) {
         rlPopMatrix();
         return;
     }
-    Tetrimino holdpiece = tetrimino_new(game->holdpiece.type);
-    Vector2 offset = offset_of_tetrimino_type(game->holdpiece.type, info.displayblocksidelen);
-    Color holdcolor = game->pieceheld ? GRAY : color_of_tetrimino_type(holdpiece.type);
+    Tetrimino holdpiece = tetrimino_new(g_game.holdpiece.type);
+    Vector2 offset = offset_of_tetrimino_type(g_game.holdpiece.type, info.displayblocksidelen);
+    Color holdcolor = g_game.pieceheld ? GRAY : color_of_tetrimino_type(holdpiece.type);
     draw_tetrimino(&holdpiece, Vector2Add(drawvec, offset), info.displayblocksidelen, holdcolor);
 
     rlPopMatrix();
 }
 
-void draw_tetris_game_main_menu(TetrisGame *game) {
-    UNUSED(game);
+void draw_main_menu(void) {
     UNIMPLEMENTED();
 }
 
-void draw_tetris_game(TetrisGame *game) {
+void draw(void) {
     BeginDrawing();
     ClearBackground(TETRIS_RAYCLEAR);
 
-    if (game->state == TGS_MAIN_MENU) {
-        draw_tetris_game_main_menu(game);
+    if (g_game.state == TGS_MAIN_MENU) {
+        draw_main_menu();
     } else {
-        draw_tetris_game_board(game);
-        draw_tetris_game_piece_sidebar(game);
-        draw_tetris_game_score(game);
+        draw_tetris_game_board();
+        draw_tetris_game_piece_sidebar();
+        draw_tetris_game_score();
 
-        if (game->state == TGS_GAME_OVER) draw_tetris_game_over(game);
+        if (g_game.state == TGS_GAME_OVER) draw_tetris_game_over();
     }
 
     EndDrawing();

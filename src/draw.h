@@ -28,6 +28,9 @@ struct DrawInfo {
     float sidebar_borderwidth;
 };
 
-extern struct DrawInfo drawinfo;
+void draw_init(void);
+void draw(void);
+
+//extern struct DrawInfo drawinfo;
 
 #endif
