@@ -10,11 +10,14 @@ MainMenu   g_mainmenu;
 
 void init(void) {
     srand(time(NULL));
+
     window_init(1.1);
     mainmenu_init();
     tetris_game_new(&g_game, BOARD_DEFAULT_ROWS, BOARD_DEFAULT_COLS);
     draw_init();
+
     SetTargetFPS(60);
+    SetExitKey(KEY_Q);
 }
 
 void cleanup(void) {
