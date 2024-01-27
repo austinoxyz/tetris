@@ -3,3 +3,4 @@
     - ability to hold down movement/rotate keys
 2. Pause and game over state screens
 3. Better design decisions
+4. Scale everything properly...
