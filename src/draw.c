@@ -1,44 +1,38 @@
 #include "draw.h"
+#include "font.h"
 
-#define TETRIS_FONT_SIZE_DEFAULT 32
-#define TETRIS_FONT_LINE_SPACING_DEFAULT 32
-#define TETRIS_FONT_SPACING_DEFAULT 8
-#define TETRIS_RAYCLEAR (CLITERAL(Color) {(RAYWHITE).r, (RAYWHITE).g, (RAYWHITE).b, 120})
+extern TetrisGame g_game;
+extern MainMenu   g_mainmenu;
 
 #define BLOCK_POS(row, col, sidelen) (CLITERAL(Vector2){(col)*(sidelen),(row)*(sidelen)})
 
-static int fontsize;
-static int fontspacing;
-static int fontlinespacing;
-static int fontheight;
+static Color bkgcolor, backdropcolor;
 
 static int canvaswidth, canvasheight;
 
+static float scale;
+
 static float boardaspect;
 static int boardwidth, boardheight;
+static Vector2 board_offset;
 static int blocksidelen;
-static int displayblocksidelen;
 
-static float scale;
+static int displayblocksidelen;
 static float displaypiece_scale;
 
+static Rectangle upcoming_bounds;
+static Rectangle holdpiece_bounds;
+
 static float sidebar_borderwidth;
-
-static Vector2 board_offset;
 static Vector2 sidebar_offset;
-static Vector2 score_offset;
-static Vector2 gameover_offset;
 
-static Font font;
+static Vector2 score_offset;
+
+static Vector2 gameover_offset;
 
 static float logoscale;
 static Texture2D logo;
 static Vector2 logo_offset;
-
-static Color bkgcolor, backdropcolor;
-
-extern TetrisGame g_game;
-extern MainMenu   g_mainmenu;
 
 Color color_of_tetrimino_type(TetriminoType const type) {
     switch (type) {
@@ -77,13 +71,6 @@ void draw_init(void) {
     blocksidelen = boardwidth / ((float)g_game.cols+2);
     displayblocksidelen = displaypiece_scale * blocksidelen;
 
-    font = GetFontDefault();
-    fontsize = (int) (scale * TETRIS_FONT_SIZE_DEFAULT);
-    fontspacing = (int) (scale * TETRIS_FONT_SPACING_DEFAULT);
-    fontheight = MeasureTextEx(GetFontDefault(), "PLACEHOLDER_TEXT", fontsize, fontspacing).y;
-    fontlinespacing = (int) (scale * TETRIS_FONT_LINE_SPACING_DEFAULT);
-    SetTextLineSpacing(fontlinespacing);
-
     board_offset = CLITERAL(Vector2) {
         .x=(0.05f * canvaswidth), 
         .y=(0.05f * canvasheight) };
@@ -97,7 +84,7 @@ void draw_init(void) {
     };
     gameover_offset = CLITERAL(Vector2) {
         .x=(score_offset.x),
-        .y=(score_offset.y+2*fontheight)
+        .y=(score_offset.y+2*g_fontheight)
     };
 
     sidebar_borderwidth = 2;
@@ -111,10 +98,26 @@ void draw_init(void) {
 
     bkgcolor = DARKBLUE;
     backdropcolor = RAYWHITE;
+
+    upcoming_bounds = CLITERAL(Rectangle) {
+        .x=((1/2.f)*-displayblocksidelen),
+        .y=(-displayblocksidelen),
+        .width=(5*displayblocksidelen),
+        .height=(16*displayblocksidelen) };
+
+    holdpiece_bounds = CLITERAL(Rectangle) {
+        .x=(upcoming_bounds.x), 
+        .y=(16.5*displayblocksidelen),
+        .width=(upcoming_bounds.width),
+        .height=(4*displayblocksidelen),
+    };
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
     ++pos.x;
+    // FIXME: this needs to be incremented on one machine and doesn't on another. 
+    //        it is likely a result of improper normalizing of measurements
+    //        with regards to the window dimensions
     //++pos.y;
     DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
@@ -196,79 +199,16 @@ void draw_score(void) {
     rlTranslatef(score_offset.x, score_offset.y, 0);
 
     // draw score
-    char scoretext[TETRIS_GAME_MAX_SCORE_TEXT_LEN];
+    char scoretext[TETRIS_GAME_SCORE_TEXT_MAX_LEN];
     sprintf(scoretext, "Level: %d\nScore: %d", g_game.level, g_game.score);
-    DrawTextEx(GetFontDefault(), scoretext, CLITERAL(Vector2){0,0},
-            fontsize, fontspacing, BLACK);
+    DrawTextEx(g_font, scoretext, CLITERAL(Vector2){0,0},
+            g_fontsize, g_fontspacing, BLACK);
 
     rlPopMatrix();
 }
 
-#if 0
 void draw_game_over(void) {
-    UNUSED(game);
-
-    const char *gameover_text = "Game Over!";
-    const char *playagain_text = "Press Spacebar to play again.";
-    const int popup_border_size = 10;
-    const Color popup_color = GRAY;
-
-    float fontheight = GetFontDefault().baseSize;
-
-    Vector2 textdim1 = MeasureTextEx(GetFontDefault(), gameover_text, 
-            fontsize, fontspacing);
-    Vector2 textdim2 = MeasureTextEx(GetFontDefault(), playagain_text, 
-            fontsize, fontspacing);
-
-    float popupwidth = 1.2f*textdim2.x;
-    float popupheight = 3*fontheight + 2*popup_border_size;
-
-    Vector2 popup_drawpos = CLITERAL(Vector2) {
-        .x=((canvaswidth - popupwidth)/2.f),
-        .y=((canvasheight - popupheight)/2.f)
-    };
-
-    rlPushMatrix();
-    rlTranslatef(popup_drawpos.x, popup_drawpos.y, 0);
-
-    Vector2 textdrawpos1 = CLITERAL(Vector2) {
-        .x=((popupwidth - textdim1.x)/2.f),
-        .y=((popupheight - textdim1.y)/2.f - fontheight)
-    };
-
-    Vector2 textdrawpos2 = CLITERAL(Vector2) {
-        .x=((popupwidth - textdim2.x)/2.f),
-        .y=((popupheight - textdim2.y)/2.f - fontheight)
-    };
-
-    // background rectangle
-    Rectangle popup_bkg = CLITERAL(Rectangle) {
-        .x=-0.1f*popupwidth,
-        .y=-0.1f*popupheight,
-        .width=popupwidth,
-        .height=popupheight
-    };
-    DrawRectangleRec(popup_bkg, popup_color);
-    DrawRectangleLinesEx(popup_bkg, 5, RED);
-
-    DrawTextEx(GetFontDefault(), gameover_text, textdrawpos1, 
-            fontsize, fontspacing, RED);
-    DrawTextEx(GetFontDefault(), playagain_text, textdrawpos2, 
-            fontsize, fontspacing, RED);
-
-    rlPopMatrix();
-}
-#endif
-
-void draw_game_over(void) {
-    rlPushMatrix();
-    rlTranslatef(gameover_offset.x, gameover_offset.y, 0);
-
-    const char *gameover_text = "Game Over!";
-    DrawTextEx(GetFontDefault(), gameover_text, CLITERAL(Vector2){0,0},
-            fontsize * 1.5, fontspacing, RED);
-
-    rlPopMatrix();
+    DrawTextEx(GetFontDefault(), "Game Over!", gameover_offset, g_fontsize * 1.5, g_fontspacing, RED);
 }
 
 void draw_piece_sidebar(void) {
@@ -276,19 +216,7 @@ void draw_piece_sidebar(void) {
     rlTranslatef(sidebar_offset.x, sidebar_offset.y, 0);
 
     // draw upcoming pieces
-    Vector2 const upcoming_offset = CLITERAL(Vector2) {
-        .x=((1/2.f)*-displayblocksidelen),
-        .y=(-displayblocksidelen) };
-    Vector2 const upcoming_dim = CLITERAL(Vector2) {
-        .x=5*displayblocksidelen,
-        .y=16*displayblocksidelen };
-
-    Rectangle const upcoming_bounds = CLITERAL(Rectangle) {
-        .x=upcoming_offset.x, .y=upcoming_offset.y, .width=upcoming_dim.x, .height=upcoming_dim.y
-    };
-
     DrawRectangleRec(upcoming_bounds, backdropcolor);
-
     Vector2 drawvec = CLITERAL(Vector2) { 0, 0 };
     for (int i = 0; i < 5; ++i) {
         TetriminoType type = nextpiecelist_piecetype_n_ahead(&g_game.nextpiece_list, i);
@@ -298,16 +226,9 @@ void draw_piece_sidebar(void) {
         drawvec.y += 3 * displayblocksidelen;
     }
     drawvec.y += 2.5*displayblocksidelen;
-
     DrawRectangleLinesEx(upcoming_bounds, sidebar_borderwidth, BLACK);
 
     // draw hold piece
-    Rectangle holdpiece_bounds = CLITERAL(Rectangle) {
-        .x=(upcoming_bounds.x), 
-        .y=(drawvec.y - displayblocksidelen),
-        .width=(upcoming_bounds.width),
-        .height=(4*displayblocksidelen),
-    };
     DrawRectangleRec(holdpiece_bounds, backdropcolor);
     DrawRectangleLinesEx(holdpiece_bounds, sidebar_borderwidth, BLACK);
     if (g_game.holdpiece.type == TT_EMPTY) {
@@ -325,12 +246,7 @@ void draw_piece_sidebar(void) {
 void draw_button(Button *button) {
     DrawRectangleRec(button->bounds, button->color);
     DrawRectangleLinesEx(button->bounds, 2, BLACK);
-    Vector2 textdim = MeasureTextEx(font, button->text, 60, fontspacing);
-    Vector2 textpos = CLITERAL(Vector2) {
-        .x=(button->bounds.x + (button->bounds.width + textdim.x)/2 - textdim.x),
-        .y=(button->bounds.y + (button->bounds.height + textdim.y)/2 - textdim.y)
-    };
-    DrawTextEx(font, button->text, textpos, 60, fontspacing, BLACK);
+    DrawTextEx(GetFontDefault(), button->text, button->textpos, 60, g_fontspacing, BLACK);
 }
 
 void draw_mainmenu(void) {

@@ -3,6 +3,7 @@
 
 #include "window.h"
 #include "util.h"
+#include "font.h"
 #include "draw.h"
 
 TetrisGame g_game;
@@ -12,6 +13,7 @@ void init(void) {
     srand(time(NULL));
 
     window_init(1.1);
+    font_init();
     mainmenu_init();
     tetris_game_new(&g_game, BOARD_DEFAULT_ROWS, BOARD_DEFAULT_COLS);
     draw_init();

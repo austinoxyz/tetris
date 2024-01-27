@@ -14,9 +14,13 @@ typedef enum MenuOptionType {
 
 typedef struct Button {
     Rectangle      bounds;
-    Color          color;
+    int            fontsize;
     const char*    text;
+    Vector2        textpos;
+    Color          color;
 } Button;
+
+Button button_new(Rectangle, const char *, int, Color);
 
 typedef struct MainMenu {
     struct {
