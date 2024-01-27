@@ -30,7 +30,7 @@ void tetris_game_new(TetrisGame *game, int rows, int cols) {
 
     TETRIS_GAME_SET_UPDATE_SPEED(game, 1);
 
-    game->state = TGS_IN_PLAY;
+    game->state = TGS_MAIN_MENU;
 }
 
 void tetris_game_free(TetrisGame *game) {
@@ -432,6 +432,7 @@ void tetris_game_handle_user_input(TetrisGame *game) {
         }
     } else if (game->state == TGS_GAME_OVER) {
         if (IsKeyPressed(KEY_SPACE)) {
+            printf("ITS PRESSED!\n");
             tetris_game_restart(game);
         }
     }

@@ -3,27 +3,31 @@
 
 #include "util.h"
 
+#if 0
 typedef enum MenuOptionType {
     MOT_PLAY,
     MOT_SETTINGS,
     MOT_QUIT,
     MOT_COUNT
 } MenuOptionType;
+#endif
 
 typedef struct Button {
     Rectangle      bounds;
     Color          color;
+    const char*    text;
 } Button;
 
-typedef struct Menu {
+typedef struct MainMenu {
     struct {
         Button play;
         Button settings;
         Button quit;
     } buttons;
-} Menu;
+    Color buttoncolor, highlight_buttoncolor;
+} MainMenu;
 
-void menu_init(Menu *menu);
-void menu_handle_input(Menu *menu);
+void mainmenu_init(void);
+void mainmenu_handle_input(void);
 
 #endif

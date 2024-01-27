@@ -1,8 +1,4 @@
 #include "draw.h"
-#include "game.h"
-
-#include "common.h"
-#include "util.h"
 
 #define TETRIS_FONT_SIZE_DEFAULT 32
 #define TETRIS_FONT_LINE_SPACING_DEFAULT 32
@@ -14,6 +10,7 @@
 struct DrawInfo info;
 
 extern TetrisGame g_game;
+extern MainMenu   g_mainmenu;
 
 Color color_of_tetrimino_type(TetriminoType const type) {
     switch (type) {
@@ -52,10 +49,10 @@ void draw_init(void) {
     info.blocksidelen = info.boardwidth / ((float)g_game.cols+2);
     info.displayblocksidelen = info.displaypiece_scale * info.blocksidelen;
 
+    info.font = GetFontDefault();
     info.fontsize = (int) (info.scale * TETRIS_FONT_SIZE_DEFAULT);
     info.fontspacing = (int) (info.scale * TETRIS_FONT_SPACING_DEFAULT);
-    Vector2 tmpvec = MeasureTextEx(GetFontDefault(), "AAA", info.fontsize, info.fontspacing);
-    info.fontheight = tmpvec.y;
+    info.fontheight = MeasureTextEx(GetFontDefault(), "PLACEHOLDER_TEXT", info.fontsize, info.fontspacing).y;
     info.fontlinespacing = (int) (info.scale * TETRIS_FONT_LINE_SPACING_DEFAULT);
     SetTextLineSpacing(info.fontlinespacing);
 
@@ -81,7 +78,7 @@ void draw_init(void) {
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
     ++pos.x;
-    ++pos.y;
+    //++pos.y;
     DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
              pos.x+0.8f*sidelen,pos.y+0.8f*sidelen, BLACK);
@@ -97,7 +94,7 @@ void draw_tetrimino(Tetrimino *tetrimino, Vector2 pos, float sidelen, Color colo
     }
 }
 
-void draw_tetris_game_board(void) {
+void draw_board(void) {
     // Translate to game board position
     rlPushMatrix();
     rlTranslatef(info.board_offset.x, info.board_offset.y, 0);
@@ -150,7 +147,7 @@ void draw_tetris_game_board(void) {
     rlPopMatrix();
 }
 
-void draw_tetris_game_score(void) {
+void draw_score(void) {
     rlPushMatrix();
     rlTranslatef(info.score_offset.x, info.score_offset.y, 0);
 
@@ -164,7 +161,7 @@ void draw_tetris_game_score(void) {
 }
 
 #if 0
-void draw_tetris_game_over(void) {
+void draw_game_over(void) {
     UNUSED(game);
 
     const char *gameover_text = "Game Over!";
@@ -219,7 +216,7 @@ void draw_tetris_game_over(void) {
 }
 #endif
 
-void draw_tetris_game_over(void) {
+void draw_game_over(void) {
     rlPushMatrix();
     rlTranslatef(info.gameover_offset.x, info.gameover_offset.y, 0);
 
@@ -230,7 +227,7 @@ void draw_tetris_game_over(void) {
     rlPopMatrix();
 }
 
-void draw_tetris_game_piece_sidebar(void) {
+void draw_piece_sidebar(void) {
     rlPushMatrix();
     rlTranslatef(info.sidebar_offset.x, info.sidebar_offset.y, 0);
 
@@ -273,23 +270,48 @@ void draw_tetris_game_piece_sidebar(void) {
     rlPopMatrix();
 }
 
-void draw_main_menu(void) {
-    UNIMPLEMENTED();
+void draw_button(Button *button) {
+    DrawRectangleRec(button->bounds, button->color);
+    DrawRectangleLinesEx(button->bounds, 2, BLACK);
+//    textdim = MeasureTextEx(info.font, g_mainmenu.button.play.text, 20, info.fontspacing);
+//    textpos = g_mainmenu.buttons.play.bounds.x + (g_mainmenu.buttons.play.bounds.width + texdim.x)/2;
 }
 
-void draw(void) {
+void draw_mainmenu(void) {
+    if (g_game.state != TGS_MAIN_MENU) return;
+
+    Vector2 textpos, textdim;
+    UNUSED(textpos);
+    UNUSED(textdim);
+
     BeginDrawing();
     ClearBackground(TETRIS_RAYCLEAR);
 
-    if (g_game.state == TGS_MAIN_MENU) {
-        draw_main_menu();
-    } else {
-        draw_tetris_game_board();
-        draw_tetris_game_piece_sidebar();
-        draw_tetris_game_score();
+    // play button
+    draw_button(&g_mainmenu.buttons.play);
+//    DrawRectangleRec(g_mainmenu.buttons.play.bounds,     g_mainmenu.buttoncolor);
+//    DrawRectangleLinesEx(g_mainmenu.buttons.play.bounds, 2, BLACK);
 
-        if (g_game.state == TGS_GAME_OVER) draw_tetris_game_over();
-    }
+    draw_button(&g_mainmenu.buttons.settings);
+//    DrawRectangleRec(g_mainmenu.buttons.settings.bounds, g_mainmenu.buttoncolor);
+//    DrawRectangleLinesEx(g_mainmenu.buttons.settings.bounds, 2, BLACK);
 
+    draw_button(&g_mainmenu.buttons.quit);
+//    DrawRectangleRec(g_mainmenu.buttons.quit.bounds,     g_mainmenu.buttoncolor);
+//    DrawRectangleLinesEx(g_mainmenu.buttons.quit.bounds, 2, BLACK);
+
+    EndDrawing();
+}
+
+void draw_game(void) {
+    if (g_game.state == TGS_MAIN_MENU) return;
+
+    BeginDrawing();
+    ClearBackground(TETRIS_RAYCLEAR);
+    draw_board();
+    draw_piece_sidebar();
+    draw_score();
+    if (g_game.state == TGS_GAME_OVER) 
+        draw_game_over();
     EndDrawing();
 }

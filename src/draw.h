@@ -2,6 +2,7 @@
 #define TETRIS_DRAW_H
 
 #include "game.h"
+#include "menu.h"
 #include "window.h"
 
 struct DrawInfo {
@@ -20,17 +21,19 @@ struct DrawInfo {
     float scale;
     float displaypiece_scale;
 
+    float sidebar_borderwidth;
+
     Vector2 board_offset;
     Vector2 sidebar_offset;
     Vector2 score_offset;
     Vector2 gameover_offset;
 
-    float sidebar_borderwidth;
+    Font font;
 };
 
 void draw_init(void);
-void draw(void);
 
-//extern struct DrawInfo drawinfo;
+void draw_game(void);
+void draw_mainmenu(void);
 
 #endif
