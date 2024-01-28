@@ -7,6 +7,7 @@
 
 typedef enum TetrisGameState {
     TGS_MAIN_MENU = 0,
+    TGS_HIGHSCORES,
     TGS_IN_PLAY,
     TGS_PAUSED,
     TGS_GAME_OVER,
@@ -71,7 +72,5 @@ void tetris_game_free(TetrisGame *game);
 
 void tetris_game_handle_user_input(TetrisGame *game);
 void tetris_game_update(TetrisGame *game, timestamp_t dt);
-
-Position tetris_game_find_hard_drop_position(TetrisGame *);
 
 #endif

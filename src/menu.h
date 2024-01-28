@@ -25,7 +25,7 @@ Button button_new(Rectangle, const char *, int, Color);
 typedef struct MainMenu {
     struct {
         Button play;
-        Button settings;
+        Button highscores;
         Button quit;
     } buttons;
     Color buttoncolor, highlight_buttoncolor;

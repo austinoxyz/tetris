@@ -4,6 +4,9 @@
 extern TetrisGame g_game;
 extern MainMenu   g_mainmenu;
 
+// for ghost piece
+extern Position tetris_game_find_hard_drop_position(TetrisGame *);
+
 #define BLOCK_POS(row, col, sidelen) (CLITERAL(Vector2){(col)*(sidelen),(row)*(sidelen)})
 
 static Color bkgcolor, backdropcolor;
@@ -246,7 +249,7 @@ void draw_piece_sidebar(void) {
 void draw_button(Button *button) {
     DrawRectangleRec(button->bounds, button->color);
     DrawRectangleLinesEx(button->bounds, 2, BLACK);
-    DrawTextEx(GetFontDefault(), button->text, button->textpos, 60, g_fontspacing, BLACK);
+    DrawTextEx(GetFontDefault(), button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
 }
 
 void draw_mainmenu(void) {
@@ -256,9 +259,13 @@ void draw_mainmenu(void) {
     ClearBackground(bkgcolor);
         DrawTextureEx(logo, logo_offset, 0, logoscale, RAYWHITE);
         draw_button(&g_mainmenu.buttons.play);
-        draw_button(&g_mainmenu.buttons.settings);
+        draw_button(&g_mainmenu.buttons.highscores);
         draw_button(&g_mainmenu.buttons.quit);
     EndDrawing();
+}
+
+void draw_highscores(void) {
+    UNIMPLEMENTED();
 }
 
 void draw_game(void) {

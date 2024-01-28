@@ -1,9 +1,5 @@
-#include <raylib.h>
-#include <stdio.h>
-
-#include "window.h"
-#include "util.h"
 #include "font.h"
+#include "highscores.h"
 #include "draw.h"
 
 TetrisGame g_game;
@@ -32,10 +28,19 @@ void quit(void) {
     exit(0);
 }
 
-void menu_loop(void) {
+void mainmenu_loop(void) {
     while (g_game.state == TGS_MAIN_MENU) {
         draw_mainmenu();
         mainmenu_handle_input();
+
+        if (WindowShouldClose()) quit();
+    }
+}
+
+void highscores_loop(void) {
+    while (g_game.state == TGS_HIGHSCORES) {
+        draw_highscores();
+        highscores_handle_input();
 
         if (WindowShouldClose()) quit();
     }
@@ -66,7 +71,9 @@ void main_loop(void) {
     for (;;) {
         switch (g_game.state) {
         case TGS_MAIN_MENU: 
-            menu_loop(); break;
+            mainmenu_loop(); break;
+        case TGS_HIGHSCORES:
+            highscores_loop(); break;
         case TGS_IN_PLAY:   
         case TGS_GAME_OVER:   
             game_loop(); break;

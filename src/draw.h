@@ -7,7 +7,8 @@
 
 void draw_init(void);
 
-void draw_game(void);
 void draw_mainmenu(void);
+void draw_game(void);
+void draw_highscores(void);
 
 #endif
