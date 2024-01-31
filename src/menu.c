@@ -3,8 +3,7 @@
 #include "game.h"
 #include "window.h"
 
-extern TetrisGame g_game;
-extern MainMenu   g_mainmenu;
+GLOBAL MainMenu g_mainmenu;
 
 Button button_new(Rectangle _bounds, const char *_text, int _fontsize, Color _color) {
     Button result;
@@ -72,7 +71,7 @@ void mainmenu_handle_input(void) {
             g_game.state = TGS_HIGHSCORES;
         } else if (button_is_clicked(clickpos, g_mainmenu.buttons.quit)) {
             printf("Clicked quit button!\n");
-            quit();
+            quit(0);
         }
     }
 }

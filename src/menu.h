@@ -1,16 +1,7 @@
 #ifndef MENU_H
 #define MENU_H
 
-#include "util.h"
-
-#if 0
-typedef enum MenuOptionType {
-    MOT_PLAY,
-    MOT_SETTINGS,
-    MOT_QUIT,
-    MOT_COUNT
-} MenuOptionType;
-#endif
+#include "common.h"
 
 typedef struct Button {
     Rectangle      bounds;
@@ -30,6 +21,8 @@ typedef struct MainMenu {
     } buttons;
     Color buttoncolor, highlight_buttoncolor;
 } MainMenu;
+
+GLOBAL extern MainMenu g_mainmenu;
 
 void mainmenu_init(void);
 void mainmenu_handle_input(void);

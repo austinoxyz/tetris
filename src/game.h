@@ -3,11 +3,13 @@
 
 #include <raylib.h>
 
+#include "chrono.h"
 #include "tetriminolist.h"
 
 typedef enum TetrisGameState {
     TGS_MAIN_MENU = 0,
     TGS_HIGHSCORES,
+    TGS_NEW_HIGHSCORE,
     TGS_IN_PLAY,
     TGS_PAUSED,
     TGS_GAME_OVER,
@@ -26,13 +28,13 @@ typedef enum TspinType {
 #define PIECE_LOOKAHEAD_COUNT 5
 #define PIECE_START_POS(rows,cols) CLITERAL(Position) { 0, ((cols)/2)-2 }
 #define TETRIS_GAME_SCORE_TEXT_MAX_LEN 127
-#define TETRIS_GAME_US_UNTIL_FINALIZATION_AFTER_ROTATION 1000000
-#define TETRIS_GAME_US_UNTIL_KEY_CAN_BE_HELD 300000
+#define TETRIS_GAME_MS_UNTIL_FINALIZATION_AFTER_ROTATION 1000
+#define TETRIS_GAME_MS_UNTIL_KEY_CAN_BE_HELD 300
 #define TETRIS_GAME_POS_IS_ON_BOARD(game, row, col) \
     (((row) > 0 && (row) < (game)->rows) && ((col) > 0 && (col) < (game)->cols))
 #define TETRIS_GAME_SET_UPDATE_SPEED(game, tps) do { \
     (game)->ticks_per_sec = (tps);                   \
-    (game)->us_per_update = (timestamp_t)((float)US_IN_A_SECOND)/((float)(game)->ticks_per_sec); \
+    (game)->us_per_update = (timestamp_t)((1000)/((float)(game)->ticks_per_sec)); \
 } while (0);
 typedef struct TetrisGame {
     int             level;
@@ -67,10 +69,14 @@ typedef struct TetrisGame {
     bool debug;
 } TetrisGame;
 
+GLOBAL extern TetrisGame g_game;
+
 void tetris_game_new(TetrisGame *game, int rows, int cols);
 void tetris_game_free(TetrisGame *game);
 
-void tetris_game_handle_user_input(TetrisGame *game);
 void tetris_game_update(TetrisGame *game, timestamp_t dt);
+
+void tetris_game_handle_user_input(TetrisGame *game);
+void new_highscore_handle_input(void);
 
 #endif

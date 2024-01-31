@@ -1,6 +1,12 @@
 #include "common.h"
 #include "game.h"
+#include "highscores.h"
 #include "config.h"
+
+GLOBAL TetrisGame g_game;
+
+static int  s_highscore_name_buff_idx;
+static char s_highscore_name_buff[4];
 
 void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->level = 1;
@@ -28,7 +34,7 @@ void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->holdpiece = tetrimino_new(TT_EMPTY);
     game->pieceheld = false;
 
-    TETRIS_GAME_SET_UPDATE_SPEED(game, 1);
+    TETRIS_GAME_SET_UPDATE_SPEED(game, 3);
 
     game->state = TGS_MAIN_MENU;
 }
@@ -47,6 +53,10 @@ void tetris_game_restart(TetrisGame *game) {
     int cols = game->cols;
     tetris_game_free(game);
     tetris_game_new(game, rows, cols);
+}
+
+void tetris_handle_highscore(TetrisGame *game) {
+    if (!score_is_new_highscore(game->score)) return;
 }
 
 bool tetris_game_try_fit_piece(TetrisGame *game, Tetrimino *tetrimino, Position const pos) {
@@ -283,7 +293,13 @@ void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position
     tetris_game_cycle_next_piece(game);
     if (!tetris_game_try_fit_piece(game, &game->activepiece, game->activepiece_pos)) {
         printf("Game over!\n");
-        game->state = TGS_GAME_OVER;
+        if (score_is_new_highscore(game->score)) {
+            game->state = TGS_NEW_HIGHSCORE;
+            memcpy(s_highscore_name_buff, "___", 3 * sizeof(char));
+            s_highscore_name_buff_idx = 0;
+        } else {
+            game->state = TGS_GAME_OVER;
+        }
         return;
     }
     game->pieceheld = false;
@@ -307,7 +323,7 @@ void tetris_game_try_rotate_piece(TetrisGame *game, TetriminoRotationDirection c
         }
         tetrimino_rotate(&game->activepiece, opposite_rotation_direction(dir));
     }
-    game->justrotated = TETRIS_GAME_US_UNTIL_FINALIZATION_AFTER_ROTATION;
+    game->justrotated = TETRIS_GAME_MS_UNTIL_FINALIZATION_AFTER_ROTATION;
 }
 
 bool tetris_game_try_move_piece(TetrisGame *game, TetriminoMoveDirection const dir) {
@@ -434,6 +450,21 @@ void tetris_game_handle_user_input(TetrisGame *game) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE))
             tetris_game_restart(game);
     }
+}
+
+void new_highscore_handle_input(void) {
+    if (g_game.state == TGS_NEW_HIGHSCORE) {
+        int key;
+        if ((key = is_keyboard_key_pressed())) {
+            s_highscore_name_buff[s_highscore_name_buff_idx++] = (char)key;
+            if (s_highscore_name_buff_idx == 3) {
+                s_highscore_name_buff[3] = '\0';
+                printf("New highscore by player: '%s'\n", s_highscore_name_buff);
+                highscores_insert_if_highscore(new_highscore_entry(s_highscore_name_buff, g_game.score));
+                g_game.state = TGS_GAME_OVER;
+            }
+        }
+    } 
 }
 
 void tetris_game_update(TetrisGame *game, timestamp_t dt) {

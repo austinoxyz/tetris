@@ -24,4 +24,6 @@
 #define UNUSED(x) {(void)x;}
 #define UNIMPLEMENTED() {assert(false && "Called unimplemented function at " __FILE__ ":" STR(__LINE__));}
 
+#define GLOBAL
+
 #endif

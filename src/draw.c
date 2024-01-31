@@ -1,8 +1,10 @@
 #include "draw.h"
-#include "font.h"
 
-extern TetrisGame g_game;
-extern MainMenu   g_mainmenu;
+#include "window.h"
+#include "font.h"
+#include "game.h"
+#include "menu.h"
+#include "highscores.h"
 
 // for ghost piece
 extern Position tetris_game_find_hard_drop_position(TetrisGame *);
@@ -36,6 +38,10 @@ static Vector2 gameover_offset;
 static float logoscale;
 static Texture2D logo;
 static Vector2 logo_offset;
+
+static Vector2 highscores_start_offset;
+
+static Color gridlines_color;
 
 Color color_of_tetrimino_type(TetriminoType const type) {
     switch (type) {
@@ -114,6 +120,13 @@ void draw_init(void) {
         .width=(upcoming_bounds.width),
         .height=(4*displayblocksidelen),
     };
+
+    highscores_start_offset = CLITERAL(Vector2) {
+        .x=(0.08f*window_width()),
+        .y=(0.05f*window_height()),
+    };
+
+    gridlines_color = hex_to_color(0x2B2B2B80);
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
@@ -137,6 +150,26 @@ void draw_tetrimino(Tetrimino *tetrimino, Vector2 pos, float sidelen, Color colo
     }
 }
 
+void draw_board_gridlines(void) {
+    DrawLine(0, 0, (g_game.cols+2)*blocksidelen, 0, BLACK);
+    DrawLine(blocksidelen, blocksidelen, (g_game.cols+1)*blocksidelen, blocksidelen, BLACK);
+
+    for (int r = 1; r <= g_game.rows+1; ++r)
+        DrawLine(0, r * blocksidelen, (g_game.cols+2)*blocksidelen, r * blocksidelen, gridlines_color);
+
+    DrawLine(blocksidelen, (g_game.rows+1)*blocksidelen, (g_game.cols+1)*blocksidelen, (g_game.rows+1)*blocksidelen, BLACK);
+    DrawLine(           0, (g_game.rows+2)*blocksidelen, (g_game.cols+2)*blocksidelen, (g_game.rows+2)*blocksidelen, BLACK);
+
+    DrawLine(0, 0, 0, (g_game.rows+2)*blocksidelen, BLACK);
+    DrawLine(blocksidelen, blocksidelen, blocksidelen, (g_game.rows+1)*blocksidelen, BLACK);
+
+    for (int c = 1; c <= g_game.cols+1; ++c)
+        DrawLine(c * blocksidelen, 0, c * blocksidelen, (g_game.rows+2)*blocksidelen, gridlines_color);
+
+    DrawLine((g_game.cols+1)*blocksidelen, blocksidelen, (g_game.cols+1)*blocksidelen, (g_game.rows+1)*blocksidelen, BLACK);
+    DrawLine((g_game.cols+2)*blocksidelen,            0, (g_game.cols+2)*blocksidelen, (g_game.rows+2)*blocksidelen, BLACK);
+}
+
 void draw_board(void) {
     // Translate to game board position
     rlPushMatrix();
@@ -149,11 +182,7 @@ void draw_board(void) {
         .height=(blocksidelen*(g_game.rows+2)),
     }), backdropcolor);
 
-    // draw gridlines
-    for (int r = 0; r <= g_game.rows+2; ++r)
-        DrawLine(0, r * blocksidelen, (g_game.cols+2)*blocksidelen, r * blocksidelen, BLACK);
-    for (int c = 0; c <= g_game.cols+2; ++c)
-        DrawLine(c * blocksidelen, 0, c * blocksidelen, (g_game.rows+2)*blocksidelen, BLACK);
+    draw_board_gridlines();
 
     // draw boundary
     for (int c = 0; c < g_game.cols+2; ++c) {
@@ -249,7 +278,8 @@ void draw_piece_sidebar(void) {
 void draw_button(Button *button) {
     DrawRectangleRec(button->bounds, button->color);
     DrawRectangleLinesEx(button->bounds, 2, BLACK);
-    DrawTextEx(GetFontDefault(), button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
+//    DrawTextEx(GetFontDefault(), button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
+    DrawTextEx(g_font, button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
 }
 
 void draw_mainmenu(void) {
@@ -265,7 +295,34 @@ void draw_mainmenu(void) {
 }
 
 void draw_highscores(void) {
-    UNIMPLEMENTED();
+    if (g_game.state != TGS_HIGHSCORES) return;
+
+    int const highscores_fontsize    = 2*g_fontsize;
+    int const highscores_fontspacing = g_fontspacing;
+    Vector2 offset = CLITERAL(Vector2) { 0, 0 };
+    Vector2 textdim = MeasureTextEx(g_font, "PLACEHOLDER_TEXT", highscores_fontsize, highscores_fontspacing);
+    char tmpbuf[20];
+
+    BeginDrawing();
+    ClearBackground(bkgcolor);
+        for (int i = 0; i < g_highscores.count; ++i) {
+            DrawTextEx(g_font, g_highscores.entries[i].name, Vector2Add(highscores_start_offset, offset), 
+                       highscores_fontsize, highscores_fontspacing, BLACK);
+            offset.x += 0.25f*window_width();
+            sprintf(tmpbuf, "%d", g_highscores.entries[i].score);
+            DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_start_offset, offset), 
+                       highscores_fontsize, highscores_fontspacing, BLACK);
+            offset.x += 0.25f*window_width();
+            strftime(tmpbuf, sizeof tmpbuf, "%D", gmtime(&g_highscores.entries[i].time.tv_sec));
+            DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_start_offset, offset), 
+                       highscores_fontsize, highscores_fontspacing, BLACK);
+            offset.x = 0;
+            offset.y += textdim.y;
+        }
+    EndDrawing();
+}
+
+void draw_new_highscore_dialog() {
 }
 
 void draw_game(void) {
@@ -276,7 +333,9 @@ void draw_game(void) {
         draw_board();
         draw_piece_sidebar();
         draw_score();
-        if (g_game.state == TGS_GAME_OVER) 
+        if (g_game.state == TGS_NEW_HIGHSCORE) 
+            draw_new_highscore_dialog();
+        else if (g_game.state == TGS_GAME_OVER)
             draw_game_over();
     EndDrawing();
 }

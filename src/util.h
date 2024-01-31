@@ -1,17 +1,17 @@
 #ifndef TETRIS_UTIL_H
 #define TETRIS_UTIL_H
 
-#include <stdint.h>
 #include <raylib.h>
+#include <stdint.h>
+#include <time.h>
 
-// unix time in us
-typedef uint64_t timestamp_t;
-#define US_IN_A_SECOND 1000000
+void quit(int);
+void cleanup(void);
 
-extern void quit(void);
-
-timestamp_t current_time_us(void);
+char *strdup(const char *s);
 
 Color hex_to_color(uint32_t);
+
+int is_keyboard_key_pressed(void);
 
 #endif
