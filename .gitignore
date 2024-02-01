@@ -7,3 +7,5 @@ debug/
 .vimspector.json
 
 src/*.o
+
+highscores.txt
