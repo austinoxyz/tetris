@@ -13,7 +13,6 @@ Button button_new(Rectangle _bounds, const char *_text, int _fontsize, Color _co
     result.fontsize = _fontsize;
 
     Vector2 textdim = MeasureTextEx(g_font, _text, _fontsize, g_fontspacing);
-    printf("textdim = {%f,%f}\n",textdim.x,textdim.y);
     result.textpos = (CLITERAL(Vector2) {
         .x=(_bounds.x + _bounds.width/2  - textdim.x/2),
         .y=(_bounds.y + _bounds.height/2 - textdim.y/2)

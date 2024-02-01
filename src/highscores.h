@@ -20,7 +20,7 @@ typedef struct Highscores {
     HighscoreArray entries;
 } Highscores;
 
-extern Highscores g_highscores;
+GLOBAL extern Highscores g_highscores;
 
 void highscores_init(void);
 void highscores_deinit(void);

@@ -50,17 +50,16 @@ void new_highscore_loop(void) {
 void game_loop(void) {
     timestamp_t now;
     timestamp_t then = current_time_ms();
-    timestamp_t time_since_last_update = 0;
+    timestamp_t elapsed = 0;
     timestamp_t dt;
     while (g_game.state == TGS_IN_PLAY || g_game.state == TGS_GAME_OVER) {
         draw_game();
 
         now = current_time_ms(), dt = (now - then);
         tetris_game_handle_user_input(&g_game);
-        if ((time_since_last_update += dt) > g_game.us_per_update) {
-            tetris_game_update(&g_game, time_since_last_update);
-
-            time_since_last_update %= g_game.us_per_update;
+        if ((elapsed += dt) > g_game.ms_per_update) {
+            tetris_game_update(&g_game, elapsed);
+            elapsed %= g_game.ms_per_update;
         }
         then = now;
 

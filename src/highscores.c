@@ -4,7 +4,7 @@
 #define HIGHSCORES_FILENAME "highscores.txt"
 #define MAX_HIGHSCORE_LINE_LEN 127
 
-Highscores g_highscores;
+GLOBAL Highscores g_highscores;
 
 HighscoreEntry new_highscore_entry(char *name, int score) {
     HighscoreEntry ret; 
@@ -14,10 +14,29 @@ HighscoreEntry new_highscore_entry(char *name, int score) {
     return ret;
 }
 
+void read_in_highscores_file(void);
+void write_out_highscores_file(void);
+
+void highscores_init(void) {
+    g_highscores.count = 0;
+    read_in_highscores_file();
+}
+
+void highscores_deinit(void) {
+    write_out_highscores_file();
+    for (int i = 0; i < g_highscores.count; ++i) {
+        free(g_highscores.entries[i].name);
+    }
+}
+
 void read_in_highscores_file(void) {
     FILE *highscores_file;
     if (!(highscores_file = fopen(HIGHSCORES_FILENAME, "r"))) {
-        fprintf(stderr, "Couldn't locate file '%s'.\n", HIGHSCORES_FILENAME);
+        fprintf(stderr, "Couldn't locate file '%s', so creating it.\n", HIGHSCORES_FILENAME);
+//        if (!creat(HIGHSCORES_FILENAME, O_CREAT)) {
+//            fprintf(stderr, "Encountered an error while creating file '%s'\n", HIGHSCORES_FILENAME);
+//            quit(1);
+//        }
         return;
     }
 
@@ -44,12 +63,12 @@ void read_in_highscores_file(void) {
 
         token = strtok(NULL, "\n");
         if (!token) goto missing_fields;
-        tmp_timestamp = 1000 * strtoull(token, NULL, 0);
+        tmp_timestamp = strtoull(token, NULL, 0);
         printf("\tParsed timestamp: %ld from token: '%s'\n", tmp_timestamp, token);
         timestamp_to_timespec(tmp_timestamp, &curr_entry.time);
 
-        g_highscores.entries[linenum] = curr_entry;
-        ++g_highscores.count;
+        g_highscores.entries[g_highscores.count++] = curr_entry;
+        
     }
     if (fclose(highscores_file)) {
         fprintf(stderr, "Encountered an error while closing '%s'.\n", HIGHSCORES_FILENAME);
@@ -80,18 +99,6 @@ void write_out_highscores_file(void) {
     }
 }
 
-void highscores_init(void) {
-    g_highscores.count = 0;
-    read_in_highscores_file();
-}
-
-void highscores_deinit(void) {
-    write_out_highscores_file();
-    for (int i = 0; i < g_highscores.count; ++i) {
-        free(g_highscores.entries[i].name);
-    }
-}
-
 void highscores_handle_input(void) {
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE)) {
         g_game.state = TGS_MAIN_MENU;
@@ -105,13 +112,13 @@ void highscores_insert_if_highscore(HighscoreEntry entry) {
 
     if (place >= MAX_HIGHSCORE_ENTRIES) return;
 
-    if (place < MAX_HIGHSCORE_ENTRIES - 1) {
+    if (place < g_highscores.count) {
         memmove(&g_highscores.entries[place+1], &g_highscores.entries[place], 
-                sizeof(HighscoreEntry) * (g_highscores.count - place - 1));
+                sizeof(HighscoreEntry) * (g_highscores.count - place));
     }
 
     g_highscores.entries[place] = entry;
-    ++g_highscores.count;
+    if (g_highscores.count < MAX_HIGHSCORE_ENTRIES) ++g_highscores.count;
 }
 
 bool score_is_new_highscore(int score) {

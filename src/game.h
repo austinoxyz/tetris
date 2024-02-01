@@ -28,14 +28,18 @@ typedef enum TspinType {
 #define PIECE_LOOKAHEAD_COUNT 5
 #define PIECE_START_POS(rows,cols) CLITERAL(Position) { 0, ((cols)/2)-2 }
 #define TETRIS_GAME_SCORE_TEXT_MAX_LEN 127
+
 #define TETRIS_GAME_MS_UNTIL_FINALIZATION_AFTER_ROTATION 1000
 #define TETRIS_GAME_MS_UNTIL_KEY_CAN_BE_HELD 300
+
 #define TETRIS_GAME_POS_IS_ON_BOARD(game, row, col) \
     (((row) > 0 && (row) < (game)->rows) && ((col) > 0 && (col) < (game)->cols))
-#define TETRIS_GAME_SET_UPDATE_SPEED(game, tps) do { \
-    (game)->ticks_per_sec = (tps);                   \
-    (game)->us_per_update = (timestamp_t)((1000)/((float)(game)->ticks_per_sec)); \
+
+#define TETRIS_GAME_SET_TICKS_PER_MIN(game, tpm) do {                                 \
+    (game)->ticks_per_min = (tpm);                                                    \
+    (game)->ms_per_update = (timestamp_t)((60000.0f)/((float)(game)->ticks_per_min)); \
 } while (0);
+
 typedef struct TetrisGame {
     int             level;
     int             score;
@@ -61,8 +65,8 @@ typedef struct TetrisGame {
     Tetrimino       holdpiece;
     bool            pieceheld;
 
-    uint64_t        ticks_per_sec;
-    timestamp_t     us_per_update;
+    uint64_t        ticks_per_min;
+    timestamp_t     ms_per_update;
 
     TetrisGameState state;
 

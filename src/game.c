@@ -34,7 +34,7 @@ void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->holdpiece = tetrimino_new(TT_EMPTY);
     game->pieceheld = false;
 
-    TETRIS_GAME_SET_UPDATE_SPEED(game, 3);
+    TETRIS_GAME_SET_TICKS_PER_MIN(game, 180);
 
     game->state = TGS_MAIN_MENU;
 }
@@ -217,8 +217,7 @@ adjust_state_and_return:
 
     if ((game->rowscompleted % 10) + nrows_complete >= 10) {
         ++game->level;
-        ++game->ticks_per_sec;
-        TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec);
+        TETRIS_GAME_SET_TICKS_PER_MIN(game, game->ticks_per_min + 60);
     }
 
     game->rowscompleted += nrows_complete;
@@ -295,7 +294,7 @@ void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position
         printf("Game over!\n");
         if (score_is_new_highscore(game->score)) {
             game->state = TGS_NEW_HIGHSCORE;
-            memcpy(s_highscore_name_buff, "___", 3 * sizeof(char));
+            memcpy(s_highscore_name_buff, "___", 4 * sizeof(char));
             s_highscore_name_buff_idx = 0;
         } else {
             game->state = TGS_GAME_OVER;
@@ -441,10 +440,10 @@ void tetris_game_handle_user_input(TetrisGame *game) {
 
         if (IsKeyPressed(TETRIS_KEYBIND_SOFT_DROP)) {
             game->softdropping = true;
-            TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec*3);
+            TETRIS_GAME_SET_TICKS_PER_MIN(game, game->ticks_per_min + 300);
         } else if (IsKeyReleased(TETRIS_KEYBIND_SOFT_DROP)) {
             game->softdropping = false;
-            TETRIS_GAME_SET_UPDATE_SPEED(game, game->ticks_per_sec/3);
+            TETRIS_GAME_SET_TICKS_PER_MIN(game, game->ticks_per_min - 300);
         }
     } else if (game->state == TGS_GAME_OVER) {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_SPACE))
@@ -461,6 +460,7 @@ void new_highscore_handle_input(void) {
                 s_highscore_name_buff[3] = '\0';
                 printf("New highscore by player: '%s'\n", s_highscore_name_buff);
                 highscores_insert_if_highscore(new_highscore_entry(s_highscore_name_buff, g_game.score));
+                s_highscore_name_buff_idx = 0;
                 g_game.state = TGS_GAME_OVER;
             }
         }
@@ -489,9 +489,9 @@ void tetris_game_update(TetrisGame *game, timestamp_t dt) {
         int const _row = game->activepiece_pos.row + lowestrow[c] + 1;
         int const _col = game->activepiece_pos.col + c;
         piece_at_bottom = ((_col >= 0 && _col < game->cols) && (_row >= game->rows || game->board[_row][_col]));
-        bool const time_to_finalize_piece = (!game->justrotated || game->tspin);
+        bool const ready_to_finalize_piece = (!game->justrotated || game->tspin);
         if (piece_at_bottom) {
-            if (time_to_finalize_piece) {
+            if (ready_to_finalize_piece) {
                 tetris_game_finalize_piece(game, &game->activepiece, game->activepiece_pos);
                 if (game->tspin) {
                     printf("Tspin!\n");
