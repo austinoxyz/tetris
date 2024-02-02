@@ -5,8 +5,8 @@
 
 GLOBAL TetrisGame g_game;
 
-static int  s_highscore_name_buff_idx;
-static char s_highscore_name_buff[4];
+static int highscore_name_buff_idx;
+char highscore_name_buff[4];
 
 void tetris_game_new(TetrisGame *game, int rows, int cols) {
     game->level = 1;
@@ -291,11 +291,10 @@ void tetris_game_finalize_piece(TetrisGame *game, Tetrimino *tetrimino, Position
     tetris_game_clear_completed_rows(game);
     tetris_game_cycle_next_piece(game);
     if (!tetris_game_try_fit_piece(game, &game->activepiece, game->activepiece_pos)) {
-        printf("Game over!\n");
         if (score_is_new_highscore(game->score)) {
             game->state = TGS_NEW_HIGHSCORE;
-            memcpy(s_highscore_name_buff, "___", 4 * sizeof(char));
-            s_highscore_name_buff_idx = 0;
+            memcpy(highscore_name_buff, "___", 4 * sizeof(char));
+            highscore_name_buff_idx = 0;
         } else {
             game->state = TGS_GAME_OVER;
         }
@@ -453,16 +452,14 @@ void tetris_game_handle_user_input(TetrisGame *game) {
 
 void new_highscore_handle_input(void) {
     if (g_game.state == TGS_NEW_HIGHSCORE) {
-        int key;
-        if ((key = is_keyboard_key_pressed())) {
-            s_highscore_name_buff[s_highscore_name_buff_idx++] = (char)key;
-            if (s_highscore_name_buff_idx == 3) {
-                s_highscore_name_buff[3] = '\0';
-                printf("New highscore by player: '%s'\n", s_highscore_name_buff);
-                highscores_insert_if_highscore(new_highscore_entry(s_highscore_name_buff, g_game.score));
-                s_highscore_name_buff_idx = 0;
-                g_game.state = TGS_GAME_OVER;
-            }
+        if (highscore_name_buff_idx < 3) {
+            int letter = GetKeyPressed();
+            if (!letter) return;
+            highscore_name_buff[highscore_name_buff_idx++] = letter;
+        } else {
+            highscore_name_buff[3] = '\0';
+            highscores_insert_if_highscore(new_highscore_entry(highscore_name_buff, g_game.score));
+            g_game.state = TGS_GAME_OVER;
         }
     } 
 }

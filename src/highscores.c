@@ -32,11 +32,7 @@ void highscores_deinit(void) {
 void read_in_highscores_file(void) {
     FILE *highscores_file;
     if (!(highscores_file = fopen(HIGHSCORES_FILENAME, "r"))) {
-        fprintf(stderr, "Couldn't locate file '%s', so creating it.\n", HIGHSCORES_FILENAME);
-//        if (!creat(HIGHSCORES_FILENAME, O_CREAT)) {
-//            fprintf(stderr, "Encountered an error while creating file '%s'\n", HIGHSCORES_FILENAME);
-//            quit(1);
-//        }
+        fprintf(stderr, "No file '%s' exists to read from.", HIGHSCORES_FILENAME);
         return;
     }
 
@@ -45,7 +41,6 @@ void read_in_highscores_file(void) {
     int linenum = 0;
     char linebuff[MAX_HIGHSCORE_LINE_LEN];
     while (fgets(linebuff, MAX_HIGHSCORE_LINE_LEN, highscores_file)) {
-        printf("Parsing line %d of '%s'\n", linenum, HIGHSCORES_FILENAME);
         char *token = strtok(linebuff, ",");
         if (!token) goto missing_fields;
         curr_entry.name = (char *)malloc((MAX_HIGHSCORE_NAME_LEN+1)*sizeof(char));
@@ -54,17 +49,14 @@ void read_in_highscores_file(void) {
             fprintf(stderr, "Couldn't duplicate string in highscores_init()\n");
             quit(1);
         }
-        printf("\tParsed name: %s\n", curr_entry.name);
 
         token = strtok(NULL, ",");
         if (!token) goto missing_fields;
         curr_entry.score = atoi(token);
-        printf("\tParsed score: %d\n", curr_entry.score);
 
         token = strtok(NULL, "\n");
         if (!token) goto missing_fields;
         tmp_timestamp = strtoull(token, NULL, 0);
-        printf("\tParsed timestamp: %ld from token: '%s'\n", tmp_timestamp, token);
         timestamp_to_timespec(tmp_timestamp, &curr_entry.time);
 
         g_highscores.entries[g_highscores.count++] = curr_entry;
@@ -112,7 +104,7 @@ void highscores_insert_if_highscore(HighscoreEntry entry) {
 
     if (place >= MAX_HIGHSCORE_ENTRIES) return;
 
-    if (place < g_highscores.count) {
+    if (place < g_highscores.count - 1) {
         memmove(&g_highscores.entries[place+1], &g_highscores.entries[place], 
                 sizeof(HighscoreEntry) * (g_highscores.count - place));
     }

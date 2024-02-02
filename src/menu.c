@@ -69,7 +69,6 @@ void mainmenu_handle_input(void) {
         } else if (button_is_clicked(clickpos, g_mainmenu.buttons.highscores)) {
             g_game.state = TGS_HIGHSCORES;
         } else if (button_is_clicked(clickpos, g_mainmenu.buttons.quit)) {
-            printf("Clicked quit button!\n");
             quit(0);
         }
     }

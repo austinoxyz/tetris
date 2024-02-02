@@ -16,34 +16,42 @@ void init(void) {
     draw_init();
 
     SetTargetFPS(60);
-    SetExitKey(KEY_Q);
+//    SetExitKey(KEY_Q);
 }
 
 void mainmenu_loop(void) {
     while (g_game.state == TGS_MAIN_MENU) {
-        draw_mainmenu();
-        mainmenu_handle_input();
-
         if (WindowShouldClose()) quit(0);
+        BeginDrawing();
+            draw_mainmenu();
+        EndDrawing();
+
+        mainmenu_handle_input();
     }
 }
 
 void highscores_loop(void) {
     while (g_game.state == TGS_HIGHSCORES) {
-        draw_highscores();
-        highscores_handle_input();
-
         if (WindowShouldClose()) quit(0);
+
+        BeginDrawing();
+            draw_highscores();
+        EndDrawing();
+
+        highscores_handle_input();
     }
 }
 
 void new_highscore_loop(void) {
     while (g_game.state == TGS_NEW_HIGHSCORE) {
-        draw_game();
-        draw_new_highscore_dialog();
+        if (WindowShouldClose()) quit(0);
+
+        BeginDrawing();
+            draw_game();
+            draw_new_highscore_dialog();
+        EndDrawing();
 
         new_highscore_handle_input();
-        if (WindowShouldClose()) quit(0);
     }
 }
 
@@ -53,7 +61,9 @@ void game_loop(void) {
     timestamp_t elapsed = 0;
     timestamp_t dt;
     while (g_game.state == TGS_IN_PLAY || g_game.state == TGS_GAME_OVER) {
-        draw_game();
+        BeginDrawing();
+            draw_game();
+        EndDrawing();
 
         now = current_time_ms(), dt = (now - then);
         tetris_game_handle_user_input(&g_game);

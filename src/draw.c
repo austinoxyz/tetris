@@ -9,6 +9,9 @@
 // for ghost piece
 extern Position tetris_game_find_hard_drop_position(TetrisGame *);
 
+// for drawing entered characters on new_highscore_dialog
+extern char highscore_name_buff[4];
+
 #define BLOCK_POS(row, col, sidelen) (CLITERAL(Vector2){(col)*(sidelen),(row)*(sidelen)})
 
 static Color bkgcolor, backdropcolor;
@@ -39,7 +42,19 @@ static float logoscale;
 static Texture2D logo;
 static Vector2 logo_offset;
 
-static Vector2 highscores_start_offset;
+static Vector2 highscores_offset;
+static int highscores_fontsize;
+static int highscores_fontspacing;
+static int highscores_vert_spacing;
+
+static float new_highscore_dialog_sidelen;
+static Vector2 new_highscore_dialog_offset;
+static Rectangle new_highscore_dialog_rec;
+static const char *new_highscore_text = "New highscore!";
+static Vector2 new_highscore_text_dim;
+static Vector2 new_highscore_text_offset;
+static Vector2 new_highscore_name_dim;
+static Vector2 new_highscore_name_offset;
 
 static Color gridlines_color;
 
@@ -121,12 +136,33 @@ void draw_init(void) {
         .height=(4*displayblocksidelen),
     };
 
-    highscores_start_offset = CLITERAL(Vector2) {
+    highscores_offset = CLITERAL(Vector2) {
         .x=(0.08f*window_width()),
         .y=(0.05f*window_height()),
     };
+    highscores_fontsize    = 2*g_fontsize;
+    highscores_fontspacing = g_fontspacing;
+    highscores_vert_spacing = MeasureTextEx(g_font, "PLACEHOLDER_TEXT", highscores_fontsize, highscores_fontspacing).y;
 
     gridlines_color = hex_to_color(0x2B2B2B80);
+
+    new_highscore_dialog_sidelen = 0.75f*window_width();
+    new_highscore_dialog_offset = CLITERAL(Vector2) {
+        .x=((window_width()-new_highscore_dialog_sidelen)/2.f), .y=((window_height()-new_highscore_dialog_sidelen)/2.f),
+    };
+    new_highscore_dialog_rec = CLITERAL(Rectangle) {
+        .x=0, .y=0, .width=new_highscore_dialog_sidelen, .height=new_highscore_dialog_sidelen
+    };
+    new_highscore_text_dim = MeasureTextEx(g_font, new_highscore_text, 1.5f*g_fontsize, 1.5f*g_fontspacing);
+    new_highscore_text_offset = CLITERAL(Vector2) {
+        .x=((new_highscore_dialog_rec.width-new_highscore_text_dim.x)/2.f),
+        .y=(0.12f*new_highscore_dialog_rec.height)
+    };
+    new_highscore_name_dim = MeasureTextEx(g_font, "___", 2.2f*g_fontsize, 2.2f*g_fontspacing);
+    new_highscore_name_offset = CLITERAL(Vector2) {
+        .x=((new_highscore_dialog_rec.width-new_highscore_name_dim.x)/2.f),
+        .y=(0.62f*new_highscore_dialog_rec.height)
+    };
 }
 
 void draw_block(Vector2 pos, float sidelen, Color color) {
@@ -134,7 +170,7 @@ void draw_block(Vector2 pos, float sidelen, Color color) {
     // FIXME: this needs to be incremented on one machine and doesn't on another. 
     //        it is likely a result of improper normalizing of measurements
     //        with regards to the window dimensions
-    //++pos.y;
+    ++pos.y;
     DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
              pos.x+0.8f*sidelen,pos.y+0.8f*sidelen, BLACK);
@@ -278,64 +314,63 @@ void draw_piece_sidebar(void) {
 void draw_button(Button *button) {
     DrawRectangleRec(button->bounds, button->color);
     DrawRectangleLinesEx(button->bounds, 2, BLACK);
-//    DrawTextEx(GetFontDefault(), button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
     DrawTextEx(g_font, button->text, button->textpos, button->fontsize, g_fontspacing, BLACK);
 }
 
 void draw_mainmenu(void) {
     if (g_game.state != TGS_MAIN_MENU) return;
 
-    BeginDrawing();
     ClearBackground(bkgcolor);
-        DrawTextureEx(logo, logo_offset, 0, logoscale, RAYWHITE);
-        draw_button(&g_mainmenu.buttons.play);
-        draw_button(&g_mainmenu.buttons.highscores);
-        draw_button(&g_mainmenu.buttons.quit);
-    EndDrawing();
+    DrawTextureEx(logo, logo_offset, 0, logoscale, RAYWHITE);
+    draw_button(&g_mainmenu.buttons.play);
+    draw_button(&g_mainmenu.buttons.highscores);
+    draw_button(&g_mainmenu.buttons.quit);
 }
 
 void draw_highscores(void) {
     if (g_game.state != TGS_HIGHSCORES) return;
 
-    int const highscores_fontsize    = 2*g_fontsize;
-    int const highscores_fontspacing = g_fontspacing;
-    Vector2 offset = CLITERAL(Vector2) { 0, 0 };
-    Vector2 textdim = MeasureTextEx(g_font, "PLACEHOLDER_TEXT", highscores_fontsize, highscores_fontspacing);
     char tmpbuf[20];
+    Vector2 offset = CLITERAL(Vector2) { 0, 0 };
 
-    BeginDrawing();
     ClearBackground(bkgcolor);
-        for (int i = 0; i < g_highscores.count; ++i) {
-            DrawTextEx(g_font, g_highscores.entries[i].name, Vector2Add(highscores_start_offset, offset), 
-                       highscores_fontsize, highscores_fontspacing, BLACK);
-            offset.x += 0.25f*window_width();
-            sprintf(tmpbuf, "%d", g_highscores.entries[i].score);
-            DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_start_offset, offset), 
-                       highscores_fontsize, highscores_fontspacing, BLACK);
-            offset.x += 0.25f*window_width();
-            strftime(tmpbuf, sizeof tmpbuf, "%D", gmtime(&g_highscores.entries[i].time.tv_sec));
-            DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_start_offset, offset), 
-                       highscores_fontsize, highscores_fontspacing, BLACK);
-            offset.x = 0;
-            offset.y += textdim.y;
-        }
-    EndDrawing();
+    for (int i = 0; i < g_highscores.count; ++i) {
+        DrawTextEx(g_font, g_highscores.entries[i].name, Vector2Add(highscores_offset, offset), 
+                   highscores_fontsize, highscores_fontspacing, BLACK);
+        offset.x += 0.25f*window_width();
+        sprintf(tmpbuf, "%d", g_highscores.entries[i].score);
+        DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_offset, offset), 
+                   highscores_fontsize, highscores_fontspacing, BLACK);
+        offset.x += 0.25f*window_width();
+        strftime(tmpbuf, sizeof tmpbuf, "%D", gmtime(&g_highscores.entries[i].time.tv_sec));
+        DrawTextEx(g_font, tmpbuf, Vector2Add(highscores_offset, offset), 
+                   highscores_fontsize, highscores_fontspacing, BLACK);
+        offset.x = 0;
+        offset.y += highscores_vert_spacing;
+    }
 }
 
 void draw_new_highscore_dialog() {
+
+    rlPushMatrix();
+    rlTranslatef(new_highscore_dialog_offset.x, new_highscore_dialog_offset.y, 0);
+
+    DrawRectangleRounded(new_highscore_dialog_rec, 0.2f, 0, LIGHTGRAY);
+    DrawRectangleRoundedLines(new_highscore_dialog_rec, 0.2f, 0, 2, BLACK);
+
+    DrawTextEx(g_font, new_highscore_text, new_highscore_text_offset, 1.5f*g_fontsize, 1.5f*g_fontspacing, BLACK);
+    DrawTextEx(g_font, highscore_name_buff, new_highscore_name_offset, 2.2f*g_fontsize, 2.2f*g_fontspacing, BLUE);
+
+    rlPopMatrix();
 }
 
 void draw_game(void) {
     if (g_game.state == TGS_MAIN_MENU) return;
 
-    BeginDrawing();
     ClearBackground(bkgcolor);
-        draw_board();
-        draw_piece_sidebar();
-        draw_score();
-        if (g_game.state == TGS_NEW_HIGHSCORE) 
-            draw_new_highscore_dialog();
-        else if (g_game.state == TGS_GAME_OVER)
-            draw_game_over();
-    EndDrawing();
+    draw_board();
+    draw_piece_sidebar();
+    draw_score();
+    if (g_game.state == TGS_GAME_OVER)
+        draw_game_over();
 }
