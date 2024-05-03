@@ -13,7 +13,7 @@ WARNING_FLAGS += -Wshadow -Wuninitialized -Wformat
 CFLAGS := -std=c$(CC_VERSION) -ggdb $(WARNING_FLAGS)
 
 INCLUDES := -I./src/ `pkg-config --cflags $(THIRDPARTY_LIBS)`
-SOURCES  := $(wildcard src/*.c) $(wildcard src/**/*.c)
+SOURCES  := $(wildcard src/*.c)
 OBJECTS  := $(SOURCES:.c=.o)
 LDFLAGS  := `pkg-config --libs $(THIRDPARTY_LIBS)`
 
