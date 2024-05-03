@@ -3,6 +3,8 @@
 CC         := gcc
 CC_VERSION := 17
 
+PROJNAME := tetris
+
 THIRDPARTY_LIBS := raylib
 
 WARNING_FLAGS := -Wall -Wextra -Werror
@@ -15,23 +17,9 @@ SOURCES  := $(wildcard src/*.c) $(wildcard src/**/*.c)
 OBJECTS  := $(SOURCES:.c=.o)
 LDFLAGS  := `pkg-config --libs $(THIRDPARTY_LIBS)`
 
-DEBUG_DIR := debug
 BUILD_DIR := build
 
-BIN_NAME := $(BUILD_DIR)/tetris
-TEST_BIN_NAME := $(BUILD_DIR)/tetris
-
-CPPCHECK             := cppcheck
-CPPCHECK_OUTFILE     := $(DEBUG_DIR)/cppcheck.out.txt
-CPPCHECK_OUTFILE_XML := $(DEBUG_DIR)/cppcheck.out.xml
-
-CLANGTIDY_VERSION := 13
-CLANGTIDY         := clang-tidy-$(CLANGTIDY_VERSION)
-CLANGTIDY_CHECKS  := clang-analyzer-core.*,clang-analyzer-cplusplus,clang-analyzer-unix.*
-CLANGTIDY_OUTFILE := $(DEBUG_DIR)/clang-tidy.out.txt
-
-VALGRIND         := valgrind
-VALGRIND_OUTFILE := $(DEBUG_DIR)/valgrind-leaks.out.txt
+BIN_NAME := $(BUILD_DIR)/$(PROJNAME)
 
 # Main interface
 # -----------------------------------
@@ -50,15 +38,11 @@ clean:
 # Directories
 # -----------------------------------
 .PHONY: dirs
-dirs: build-dir debug-dir
+dirs: build-dir
 
 .PHONY: build-dir
 build-dir:
 	mkdir -p ./$(BUILD_DIR)
-
-.PHONY: debug-dir
-debug-dir:
-	mkdir -p ./$(DEBUG_DIR)
 # -----------------------------------
 
 # Thirdparty Libraries
@@ -66,8 +50,9 @@ debug-dir:
 .PHONY: libs
 libs: $(THIRDPARTY_LIBS)
 
-.PHONY: raylib
-raylib:
+# TODO: Provide raylib and build from source at game's build time
+# .PHONY: raylib
+# raylib:
 # -----------------------------------
 
 # Build Step
@@ -84,45 +69,10 @@ main: $(OBJECTS)
 # -----------------------------------
 .PHONY: debug
 debug: main
-	gdb $(BIN_NAME)
-
-.PHONY: debug-go
-debug-go: main
-	gdb -ex run $(BIN_NAME)
-
-
-.PHONY: cppcheck
-cppcheck: debug-dir
-	@$(CPPCHECK) --std=c++$(CC_VERSION)                   \
-	--quiet --enable=all --error-exitcode=1 --inline-suppr \
-	--output-file=$(CPPCHECK_OUTFILE)                      \
-	$(INCLUDES) main.c $(SOURCES)
-	nvim $(CPPCHECK_OUTFILE)
-
-.PHONY: cppcheck-xml
-cppcheck-xml: debug-dir
-	@$(CPPCHECK) --std=c++$(CC_VERSION)                   \
-	--quiet --enable=all --error-exitcode=1 --inline-suppr \
-	--xml-version=2 --output-file=$(CPPCHECK_OUTFILE_XML)  \
-	$(INCLUDES) main.c $(SOURCES)
-	nvim $(CPPCHECK_OUTFILE_XML)
-
-.PHONY: clang-tidy
-clang-tidy: debug-dir
-	$(CLANGTIDY) --quiet main.c $(SOURCES) -- \
-	-Iinclude -std=c++$(CC_VERSION)
-
-.PHONY: valgrind
-valgrind: debug-dir
-	$(VALGRIND) --leak-check=full --show-leak-kinds=all --track-origins=yes \
-	--log-file=$(VALGRIND_OUTFILE) $(BIN_NAME)
+	gdb --tui -ex run $(BIN_NAME)
 # -----------------------------------
 
 # Testing
 # -----------------------------------
-.PHONY: test-piece-encoding
-test-piece-encoding: all
-	$(CC) $(CFLAGS) -o $(TEST_DIR)/piece-encoding/main.bin $(TEST_DIR)/piece-encoding/main.c $(INCLUDES) $(LDFLAGS)
-	./$(TEST_DIR)/piece-encoding/main.bin
 # -----------------------------------
 
