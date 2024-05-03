@@ -47,10 +47,11 @@ build-dir:
 
 # Thirdparty Libraries
 # -----------------------------------
-.PHONY: libs
-libs: $(THIRDPARTY_LIBS)
-
 # TODO: Provide raylib and build from source at game's build time
+.PHONY: libs
+libs: # $(THIRDPARTY_LIBS)
+	# UNIMPLEMENTED
+
 # .PHONY: raylib
 # raylib:
 # -----------------------------------
