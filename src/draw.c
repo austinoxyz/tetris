@@ -168,9 +168,8 @@ void draw_init(void) {
 void draw_block(Vector2 pos, float sidelen, Color color) {
     ++pos.x;
     // FIXME: this needs to be incremented on one machine and doesn't on another. 
-    //        it is likely a result of improper normalizing of measurements
-    //        with regards to the window dimensions
-    ++pos.y;
+    //        if there is a slight gap at bottom of each block, uncomment the following line
+    // ++pos.y;
     DrawRectangleV(pos, CLITERAL(Vector2) {sidelen-1,sidelen-1}, color);
     DrawLine(pos.x+0.2f*sidelen,pos.y+0.2f*sidelen,
              pos.x+0.8f*sidelen,pos.y+0.8f*sidelen, BLACK);
@@ -234,8 +233,8 @@ void draw_board(void) {
     for (int r = 0; r < g_game.rows; ++r) {
         for (int c = 0; c < g_game.cols; ++c) {
             if (g_game.board[r][c] != TT_EMPTY) {
-                Color const color = color_of_tetrimino_type(g_game.board[r][c]);
-                Position const pos = { r+1, c+1 };
+                Color color = color_of_tetrimino_type(g_game.board[r][c]);
+                Position pos = { r+1, c+1 };
                 Vector2 drawpos = BLOCK_POS(pos.row, pos.col, blocksidelen);
                 draw_block(drawpos, blocksidelen, color);
             }
@@ -245,17 +244,13 @@ void draw_board(void) {
     // draw active and ghost pieces
     Position drawpos = g_game.activepiece_pos;
     Position droppos = tetris_game_find_hard_drop_position(&g_game);
-
     ++drawpos.row, ++drawpos.col;
     ++droppos.row, ++droppos.col;
-
     Vector2 piecevec = BLOCK_POS(drawpos.row, drawpos.col, blocksidelen);
     Vector2 ghostvec = BLOCK_POS(droppos.row, droppos.col, blocksidelen);
-
     Color color = color_of_tetrimino_type(g_game.activepiece.type);
     Color ghostcolor = color;
     ghostcolor.a /= 2;
-
     draw_tetrimino(&g_game.activepiece, piecevec, blocksidelen, color);
     draw_tetrimino(&g_game.activepiece, ghostvec, blocksidelen, ghostcolor);
 
