@@ -16,7 +16,7 @@ void init(void) {
     draw_init();
 
     SetTargetFPS(60);
-//    SetExitKey(KEY_Q);
+    SetExitKey(KEY_Q);
 }
 
 void mainmenu_loop(void) {
