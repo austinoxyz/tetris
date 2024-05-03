@@ -32,8 +32,15 @@ void highscores_deinit(void) {
 void read_in_highscores_file(void) {
     FILE *highscores_file;
     if (!(highscores_file = fopen(HIGHSCORES_FILENAME, "r"))) {
-        fprintf(stderr, "No file '%s' exists to read from.", HIGHSCORES_FILENAME);
-        return;
+        // try creating the file
+        if (!(highscores_file = fopen(HIGHSCORES_FILENAME, "w"))) {
+            fprintf(stderr, "[ERROR] Unable to find '%s' and an attempt to create it failed.\n", HIGHSCORES_FILENAME);
+            return;
+        }
+        if (!(highscores_file = fopen(HIGHSCORES_FILENAME, "r"))) {
+            fprintf(stderr, "[ERROR] Failed to open '%s' after creating it.\n", HIGHSCORES_FILENAME);
+            return;
+        }
     }
 
     HighscoreEntry curr_entry;

@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include <time.h>
 
+#define is_ascii_alphanum(c) \
+    (((c) >= 'A' && (c) <= 'Z') || ((c) >= '0' && (c) <= '9'))
+
 void quit(int);
 void cleanup(void);
 

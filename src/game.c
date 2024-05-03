@@ -454,7 +454,8 @@ void new_highscore_handle_input(void) {
     if (g_game.state == TGS_NEW_HIGHSCORE) {
         if (highscore_name_buff_idx < 3) {
             int letter = GetKeyPressed();
-            if (!letter) return;
+            if (!letter || !is_ascii_alphanum(letter)) 
+                return;
             highscore_name_buff[highscore_name_buff_idx++] = letter;
         } else {
             highscore_name_buff[3] = '\0';
