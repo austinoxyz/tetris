@@ -113,7 +113,7 @@ void draw_init(void) {
 
     sidebar_borderwidth = 2;
 
-    logo = LoadTexture("tetris-logo.png");
+    logo = LoadTexture("res/tetris-logo.png");
     logoscale = 0.3f; // TODO: Scale this properly
     logo_offset = CLITERAL(Vector2) {
         .x=((window_width() - logoscale*logo.width)/2),
